@@ -111,10 +111,18 @@ public class TripController {
 
     // ==================== Trip Closure ====================
 
+    @GetMapping("/{id}/closure-check")
+    public ResponseEntity<com.ctms.dto.TripClosureCheckDTO> checkClosureEligibility(@PathVariable Long id) {
+        return ResponseEntity.ok(tripClosureService.checkClosureEligibility(id));
+    }
+
     @PostMapping("/{id}/close")
-    @PreAuthorize("hasRole('EMPLOYEE')")
-    public ResponseEntity<Map<String, String>> closeTrip(@PathVariable Long id) {
-        tripClosureService.closeActiveTrip(id);
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN')")
+    public ResponseEntity<Map<String, String>> closeTrip(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "false") boolean force
+    ) {
+        tripClosureService.closeActiveTrip(id, force);
         return ResponseEntity.ok(Map.of(
                 "message", "Trip closed successfully.",
                 "tripId", id.toString()

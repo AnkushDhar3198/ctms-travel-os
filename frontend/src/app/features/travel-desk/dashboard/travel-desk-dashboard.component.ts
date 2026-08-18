@@ -47,7 +47,12 @@ import { TripRequest, Itinerary } from '../../../core/models/models';
               </div>
               <div class="flex gap-3 mt-4 pt-3 border-t">
                 <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-primary flex-1" (click)="openItineraryModal(trip)">📝 Build Itinerary</button>
-                <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-secondary flex-1" (click)="markReturned(trip)">🔄 Mark Assets Returned</button>
+                <button *ngIf="trip.status === 'ACTIVE' && !trip.itinerary?.assetsReturned" class="btn btn-sm btn-secondary flex-1" (click)="markReturned(trip)" [disabled]="trip.id === returningId">
+                  {{ trip.id === returningId ? 'Updating...' : '🔄 Mark Assets Returned' }}
+                </button>
+                <span *ngIf="trip.status === 'ACTIVE' && trip.itinerary?.assetsReturned" class="badge badge-approved p-2 text-xs w-full text-center">
+                  ✓ Assets Marked Returned
+                </span>
               </div>
             </div>
           </div>
@@ -82,6 +87,22 @@ import { TripRequest, Itinerary } from '../../../core/models/models';
         </div>
       </div>
     </div>
+
+    <!-- Notification Toast Popup -->
+    <div class="modal-overlay" [class.active]="showToastModal" (click)="showToastModal = false">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">{{ toastTitle }}</h3>
+          <button class="modal-close" (click)="showToastModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ toastMessage }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" (click)="showToastModal = false">OK</button>
+        </div>
+      </div>
+    </div>
   `,
   styles: [`
     .dashboard-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
@@ -101,7 +122,12 @@ export class TravelDeskDashboardComponent implements OnInit {
   selectedTrip: TripRequest | null = null;
   showItineraryModal = false;
   itineraryLoading = false;
+  returningId: number | null = null;
   itinerary: Partial<Itinerary> = {};
+
+  showToastModal = false;
+  toastTitle = '';
+  toastMessage = '';
 
   constructor(public authService: AuthService, private tripService: TripService) {}
 
@@ -136,19 +162,44 @@ export class TravelDeskDashboardComponent implements OnInit {
           next: () => {
             this.itineraryLoading = false;
             this.showItineraryModal = false;
+            this.showToast('Success', `Trip #${tripId} activated successfully with complete itinerary!`);
             this.loadApproved();
           },
-          error: () => { this.itineraryLoading = false; }
+          error: (err) => {
+            this.itineraryLoading = false;
+            this.showToast('Error', err.error?.message || 'Failed to activate trip.');
+          }
         });
       },
-      error: () => { this.itineraryLoading = false; }
+      error: (err) => {
+        this.itineraryLoading = false;
+        this.showToast('Error', err.error?.message || 'Failed to create itinerary.');
+      }
     });
   }
 
   markReturned(trip: TripRequest): void {
     if (!trip.id) return;
+    this.returningId = trip.id;
     this.tripService.markAssetsReturned(trip.id).subscribe({
-      next: () => this.loadActive()
+      next: () => {
+        this.returningId = null;
+        if (trip.itinerary) {
+          trip.itinerary.assetsReturned = true;
+        }
+        this.showToast('Assets Returned', `Assets for Trip #${trip.id} (${trip.destination}) marked as RETURNED successfully.`);
+        this.loadActive();
+      },
+      error: (err) => {
+        this.returningId = null;
+        this.showToast('Error', err.error?.message || 'Failed to mark assets as returned.');
+      }
     });
+  }
+
+  showToast(title: string, message: string): void {
+    this.toastTitle = title;
+    this.toastMessage = message;
+    this.showToastModal = true;
   }
 }

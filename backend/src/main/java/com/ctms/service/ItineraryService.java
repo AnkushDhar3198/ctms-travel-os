@@ -119,10 +119,18 @@ public class ItineraryService {
      */
     @Transactional
     public void markAssetsReturned(Long tripId) {
+        TripRequest trip = tripRequestRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip request not found."));
+
         TripItinerary itinerary = itineraryRepository.findByTripRequestId(tripId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No itinerary found for trip ID " + tripId
-                ));
+                .orElseGet(() -> {
+                    TripItinerary newIt = TripItinerary.builder()
+                            .tripRequest(trip)
+                            .allocatedAssets("Standard Travel Assets")
+                            .assetsReturned(true)
+                            .build();
+                    return itineraryRepository.save(newIt);
+                });
 
         itinerary.setAssetsReturned(true);
         itineraryRepository.save(itinerary);

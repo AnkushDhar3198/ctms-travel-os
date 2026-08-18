@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   TripRequest, TripMilestone, MilestoneUpdate,
-  Itinerary, Expense, UserProfile, ApprovalRequest
+  Itinerary, Expense, UserProfile, ApprovalRequest, TripClosureCheck
 } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
@@ -56,10 +56,6 @@ export class TripService {
     return this.http.put<TripRequest>(`${this.apiUrl}/trips/${id}/reject`, { reason });
   }
 
-  closeTrip(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/trips/${id}/close`, {});
-  }
-
   // ==================== Milestones ====================
 
   updateMilestone(tripId: number, update: MilestoneUpdate): Observable<TripMilestone> {
@@ -86,6 +82,16 @@ export class TripService {
 
   markAssetsReturned(tripId: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/itinerary/${tripId}/assets-returned`, {});
+  }
+
+  // ==================== Trip Closure ====================
+
+  checkTripClosure(tripId: number): Observable<TripClosureCheck> {
+    return this.http.get<TripClosureCheck>(`${this.apiUrl}/trips/${tripId}/closure-check`);
+  }
+
+  closeTrip(tripId: number, force: boolean = false): Observable<any> {
+    return this.http.post(`${this.apiUrl}/trips/${tripId}/close?force=${force}`, {});
   }
 
   // ==================== Expenses ====================

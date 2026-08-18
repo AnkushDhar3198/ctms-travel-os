@@ -100,3 +100,16 @@ export interface ApprovalRequest {
   remarks: string;
   allocatedAssets?: string;
 }
+
+export interface TripClosureCheck {
+  tripId: number;
+  datePassed: boolean;
+  endDate: string;
+  expensesCredited: boolean;
+  pendingExpensesCount: number;
+  assetsReturned: boolean;
+  allocatedAssets: string;
+  journeyEnded: boolean;
+  canClose: boolean;
+  closureBlockReason: string;
+}

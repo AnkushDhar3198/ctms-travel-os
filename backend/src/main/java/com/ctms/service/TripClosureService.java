@@ -32,15 +32,52 @@ public class TripClosureService {
     private final TripItineraryRepository itineraryRepository;
     private final ExpenseRepository expenseRepository;
 
+    public com.ctms.dto.TripClosureCheckDTO checkClosureEligibility(Long tripId) {
+        TripRequest trip = tripRequestRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found."));
+
+        boolean datePassed = LocalDate.now().isAfter(trip.getEndDate()) || LocalDate.now().isEqual(trip.getEndDate());
+        
+        long pendingExpensesCount = expenseRepository.countByTripRequestIdAndStatusNot(tripId, ExpenseStatus.CREDITED);
+        boolean expensesCredited = pendingExpensesCount == 0;
+
+        TripItinerary itinerary = itineraryRepository.findByTripRequestId(tripId).orElse(null);
+        boolean assetsReturned = true;
+        String allocatedAssets = "None";
+        if (itinerary != null && itinerary.getAllocatedAssets() != null && !itinerary.getAllocatedAssets().isBlank()) {
+            allocatedAssets = itinerary.getAllocatedAssets();
+            assetsReturned = Boolean.TRUE.equals(itinerary.getAssetsReturned());
+        }
+
+        TripMilestones milestones = milestonesRepository.findByTripRequestId(tripId).orElse(null);
+        boolean journeyEnded = milestones != null && Boolean.TRUE.equals(milestones.getJourneyEnded());
+
+        boolean canClose = expensesCredited && assetsReturned && (journeyEnded || datePassed);
+
+        StringBuilder blockReason = new StringBuilder();
+        if (!expensesCredited) blockReason.append("Pending ").append(pendingExpensesCount).append(" expense(s). ");
+        if (!assetsReturned) blockReason.append("Allocated assets (").append(allocatedAssets).append(") not marked returned. ");
+        if (!journeyEnded && !datePassed) blockReason.append("Journey has not ended and end date (").append(trip.getEndDate()).append(") is in future.");
+
+        return com.ctms.dto.TripClosureCheckDTO.builder()
+                .tripId(tripId)
+                .datePassed(datePassed)
+                .endDate(trip.getEndDate().toString())
+                .expensesCredited(expensesCredited)
+                .pendingExpensesCount(pendingExpensesCount)
+                .assetsReturned(assetsReturned)
+                .allocatedAssets(allocatedAssets)
+                .journeyEnded(journeyEnded)
+                .canClose(canClose)
+                .closureBlockReason(blockReason.length() > 0 ? blockReason.toString() : "Eligible for closure.")
+                .build();
+    }
+
     /**
-     * Closes an active trip only when ALL 4 conditions are met:
-     *  1. Current date is strictly after trip end date
-     *  2. ALL linked expenses have status CREDITED
-     *  3. Allocated assets are marked as RETURNED
-     *  4. Journey ended milestone is TRUE
+     * Closes an active trip when 4 conditions pass (or when force = true).
      */
     @Transactional
-    public void closeActiveTrip(Long tripId) {
+    public void closeActiveTrip(Long tripId, boolean force) {
         TripRequest trip = tripRequestRepository.findById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Trip not found. The requested trip does not exist."
@@ -53,56 +90,22 @@ public class TripClosureService {
             );
         }
 
-        // Rule 1: Verify current date is strictly after end_date
-        if (!LocalDate.now().isAfter(trip.getEndDate())) {
-            throw new TripClosureException(
-                    "This trip cannot be closed yet. The scheduled end date (" +
-                    trip.getEndDate() + ") has not passed. Please wait until the trip period is complete."
-            );
+        if (!force) {
+            var check = checkClosureEligibility(tripId);
+            if (!check.isCanClose()) {
+                throw new TripClosureException(check.getClosureBlockReason());
+            }
         }
 
-        // Rule 2: ALL linked expenses must have status CREDITED
-        boolean hasPendingExpenses = expenseRepository
-                .existsByTripRequestIdAndStatusNot(tripId, ExpenseStatus.CREDITED);
-        if (hasPendingExpenses) {
-            long pendingCount = expenseRepository
-                    .countByTripRequestIdAndStatusNot(tripId, ExpenseStatus.CREDITED);
-            throw new PendingExpensesException(
-                    "There are " + pendingCount + " expense(s) still pending settlement. " +
-                    "All expenses must be credited before the trip can be closed. " +
-                    "Please check with the finance team."
-            );
-        }
-
-        // Rule 3: Allocated assets must be marked as RETURNED
-        TripItinerary itinerary = itineraryRepository.findByTripRequestId(tripId)
-                .orElse(null);
-        if (itinerary != null
-                && itinerary.getAllocatedAssets() != null
-                && !itinerary.getAllocatedAssets().isBlank()
-                && !Boolean.TRUE.equals(itinerary.getAssetsReturned())) {
-            throw new TripClosureException(
-                    "Assets allocated for this trip have not been returned yet. " +
-                    "Please coordinate with the Travel Desk to return all assets before closing."
-            );
-        }
-
-        // Rule 4: journey_ended milestone must be TRUE
-        TripMilestones milestones = milestonesRepository.findByTripRequestId(tripId)
-                .orElseThrow(() -> new TripClosureException(
-                        "Trip milestones not found. The tracking record is incomplete."
-                ));
-        if (!Boolean.TRUE.equals(milestones.getJourneyEnded())) {
-            throw new TripClosureException(
-                    "The journey has not been marked as ended yet. " +
-                    "Please update the 'Journey Ended' milestone in your trip timeline before closing."
-            );
-        }
-
-        // All 4 rules passed — close the trip
+        // All rules passed — close the trip
         trip.setStatus(TripStatus.CLOSED);
         tripRequestRepository.save(trip);
 
-        log.info("Trip {} successfully closed", tripId);
+        log.info("Trip {} successfully closed (force={})", tripId, force);
+    }
+
+    @Transactional
+    public void closeActiveTrip(Long tripId) {
+        closeActiveTrip(tripId, false);
     }
 }

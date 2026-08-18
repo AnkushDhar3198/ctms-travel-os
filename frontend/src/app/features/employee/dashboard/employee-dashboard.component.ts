@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
-import { UserProfile, TripRequest, Expense } from '../../../core/models/models';
+import { UserProfile, TripRequest, Expense, TripClosureCheck } from '../../../core/models/models';
 
 @Component({
   selector: 'app-employee-dashboard',
@@ -184,10 +184,11 @@ import { UserProfile, TripRequest, Expense } from '../../../core/models/models';
                 </div>
               </div>
 
-              <div class="flex gap-2 pt-3 border-t">
+              <div class="flex gap-2 pt-3 border-t flex-wrap">
                 <button class="btn btn-sm btn-secondary flex-1" (click)="openTripDetails(trip)">🔍 Details</button>
                 <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-primary flex-1" (click)="viewTracking(trip)">📍 Track</button>
                 <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-secondary flex-1" (click)="viewExpenses(trip)">🧾 Expense</button>
+                <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-danger flex-1" (click)="openClosureModal(trip)">🏁 Close Trip</button>
               </div>
             </div>
           </div>
@@ -449,6 +450,70 @@ import { UserProfile, TripRequest, Expense } from '../../../core/models/models';
         </div>
       </div>
     </div>
+
+    <!-- Smooth Trip Closure Check Pop-Up Modal -->
+    <div class="modal-overlay" [class.active]="showClosureModal" (click)="showClosureModal = false">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Trip #{{ closureCheck?.tripId }} Final Closure Verification</h3>
+          <button class="modal-close" (click)="showClosureModal = false">✕</button>
+        </div>
+        <div class="modal-body" *ngIf="closureCheck">
+          <p class="text-xs text-secondary mb-4">Verifying 4 strict corporate closure rules:</p>
+          
+          <div class="closure-rules flex flex-col gap-3">
+            <div class="rule-box p-3 rounded flex items-center justify-between" [ngClass]="closureCheck.datePassed ? 'bg-success-light' : 'bg-primary'">
+              <div class="flex items-center gap-2 text-xs">
+                <span>📅</span> <span>Scheduled End Date ({{ closureCheck.endDate }})</span>
+              </div>
+              <span class="badge" [ngClass]="closureCheck.datePassed ? 'badge-approved' : 'badge-pending'">
+                {{ closureCheck.datePassed ? 'Passed' : 'Pending Date' }}
+              </span>
+            </div>
+
+            <div class="rule-box p-3 rounded flex items-center justify-between" [ngClass]="closureCheck.expensesCredited ? 'bg-success-light' : 'bg-primary'">
+              <div class="flex items-center gap-2 text-xs">
+                <span>🧾</span> <span>Expenses Settled & Credited</span>
+              </div>
+              <span class="badge" [ngClass]="closureCheck.expensesCredited ? 'badge-approved' : 'badge-pending'">
+                {{ closureCheck.expensesCredited ? 'All Credited' : closureCheck.pendingExpensesCount + ' Pending' }}
+              </span>
+            </div>
+
+            <div class="rule-box p-3 rounded flex items-center justify-between" [ngClass]="closureCheck.assetsReturned ? 'bg-success-light' : 'bg-primary'">
+              <div class="flex items-center gap-2 text-xs">
+                <span>🧳</span> <span>Allocated Assets Returned ({{ closureCheck.allocatedAssets }})</span>
+              </div>
+              <span class="badge" [ngClass]="closureCheck.assetsReturned ? 'badge-approved' : 'badge-pending'">
+                {{ closureCheck.assetsReturned ? 'Returned' : 'Not Returned' }}
+              </span>
+            </div>
+
+            <div class="rule-box p-3 rounded flex items-center justify-between" [ngClass]="closureCheck.journeyEnded ? 'bg-success-light' : 'bg-primary'">
+              <div class="flex items-center gap-2 text-xs">
+                <span>🏠</span> <span>Journey Ended Milestone</span>
+              </div>
+              <span class="badge" [ngClass]="closureCheck.journeyEnded ? 'badge-approved' : 'badge-pending'">
+                {{ closureCheck.journeyEnded ? 'Completed' : 'Milestone Open' }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="!closureCheck.canClose" class="text-xs text-warning p-3 rounded bg-warning-light mt-4">
+            Note: Standard closure requires all 4 checks. You can test complete closure using "Force Close".
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showClosureModal = false">Cancel</button>
+          <button *ngIf="closureCheck?.canClose" class="btn btn-success" (click)="confirmCloseTrip(false)" [disabled]="closureLoading">
+            <span class="spinner" *ngIf="closureLoading"></span> Complete & Close Trip
+          </button>
+          <button *ngIf="!closureCheck?.canClose" class="btn btn-primary" (click)="confirmCloseTrip(true)" [disabled]="closureLoading">
+            <span class="spinner" *ngIf="closureLoading"></span> Force Close Trip
+          </button>
+        </div>
+      </div>
+    </div>
   `,
   styles: [`
     .dashboard-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
@@ -568,6 +633,11 @@ export class EmployeeDashboardComponent implements OnInit {
   // Details Modal
   showDetailsModal = false;
   selectedTrip: TripRequest | null = null;
+
+  // Closure Modal
+  showClosureModal = false;
+  closureCheck: TripClosureCheck | null = null;
+  closureLoading = false;
 
   constructor(
     private authService: AuthService,
@@ -734,6 +804,36 @@ export class EmployeeDashboardComponent implements OnInit {
   openTripDetails(trip: TripRequest): void {
     this.selectedTrip = trip;
     this.showDetailsModal = true;
+  }
+
+  openClosureModal(trip: TripRequest): void {
+    if (!trip.id) return;
+    this.selectedTrip = trip;
+    this.closureCheck = null;
+    this.showClosureModal = true;
+    this.tripService.checkTripClosure(trip.id).subscribe({
+      next: (check) => this.closureCheck = check,
+      error: (err) => this.showAlert('Error', err.error?.message || 'Failed to fetch closure verification status.')
+    });
+  }
+
+  confirmCloseTrip(force: boolean): void {
+    if (!this.selectedTrip?.id) return;
+    this.closureLoading = true;
+    const tripId = this.selectedTrip.id;
+
+    this.tripService.closeTrip(tripId, force).subscribe({
+      next: () => {
+        this.closureLoading = false;
+        this.showClosureModal = false;
+        this.showAlert('Trip Closed', `Trip #${tripId} has been successfully closed!`);
+        this.loadTrips();
+      },
+      error: (err) => {
+        this.closureLoading = false;
+        this.showAlert('Closure Error', err.error?.message || 'Unable to close trip.');
+      }
+    });
   }
 
   showAlert(title: string, message: string): void {
