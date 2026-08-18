@@ -91,7 +91,7 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let user of users">
+                <tr *ngFor="let user of users" (click)="openUserModal(user)" style="cursor: pointer;">
                   <td><strong>{{ user.empId }}</strong></td>
                   <td>
                     <div class="flex items-center gap-3">
@@ -255,6 +255,36 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
         </div>
       </main>
     </div>
+
+    <!-- Smooth User Profile Modal Popup -->
+    <div class="modal-overlay" [class.active]="showUserModal" (click)="showUserModal = false">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Employee #{{ selectedUser?.empId }}</h3>
+          <button class="modal-close" (click)="showUserModal = false">✕</button>
+        </div>
+        <div class="modal-body" *ngIf="selectedUser">
+          <div class="flex items-center gap-4 mb-4 p-4 rounded bg-primary">
+            <div class="user-avatar" style="width:48px; height:48px; font-size:1.25rem">{{ selectedUser.name?.charAt(0) }}</div>
+            <div>
+              <h4 class="text-base font-bold">{{ selectedUser.name }}</h4>
+              <span class="text-xs text-secondary">{{ selectedUser.designation || 'Staff' }} · {{ selectedUser.department || 'Corporate' }}</span>
+            </div>
+          </div>
+          <div class="details-list">
+            <div class="detail-row"><span class="detail-label">System Role</span><span class="badge" [ngClass]="getRoleBadge(selectedUser.role)">{{ selectedUser.role }}</span></div>
+            <div class="detail-row"><span class="detail-label">Account Status</span><span class="badge" [ngClass]="selectedUser.isActive ? 'badge-approved' : 'badge-rejected'">{{ selectedUser.isActive ? 'Active' : 'Inactive' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Contact</span><strong>{{ selectedUser.contact || '—' }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Date of Joining</span><strong>{{ selectedUser.dateOfJoining || '—' }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Total Trips Created</span><strong>{{ selectedUser.totalTrips }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Active Trips</span><strong>{{ selectedUser.activeTripsCount }}</strong></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" (click)="showUserModal = false">Close</button>
+        </div>
+      </div>
+    </div>
   `,
   styles: [`
     .dashboard-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
@@ -326,6 +356,9 @@ export class AdminDashboardComponent implements OnInit {
 
   statusBreakdown: { label: string; count: number; colorClass: string }[] = [];
   deptBreakdown: { name: string; count: number }[] = [];
+  userFilter = 'ALL';
+  showUserModal = false;
+  selectedUser: UserProfile | null = null;
 
   constructor(public authService: AuthService, private tripService: TripService) {}
 
@@ -360,6 +393,11 @@ export class AdminDashboardComponent implements OnInit {
   loadAnalytics(): void {
     this.loadUsers();
     this.loadTrips();
+  }
+
+  openUserModal(user: UserProfile): void {
+    this.selectedUser = user;
+    this.showUserModal = true;
   }
 
   getFilteredTrips(): TripRequest[] {

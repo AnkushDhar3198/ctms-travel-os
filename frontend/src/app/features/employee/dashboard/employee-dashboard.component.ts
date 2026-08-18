@@ -184,10 +184,10 @@ import { UserProfile, TripRequest, Expense } from '../../../core/models/models';
                 </div>
               </div>
 
-              <div class="flex gap-3 pt-3 border-t">
-                <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-primary flex-1" (click)="viewTracking(trip)">📍 Live Tracking</button>
-                <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-secondary flex-1" (click)="viewExpenses(trip)">🧾 Add Expense</button>
-                <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-secondary flex-1" (click)="viewTracking(trip)">📋 Itinerary</button>
+              <div class="flex gap-2 pt-3 border-t">
+                <button class="btn btn-sm btn-secondary flex-1" (click)="openTripDetails(trip)">🔍 Details</button>
+                <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-primary flex-1" (click)="viewTracking(trip)">📍 Track</button>
+                <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-secondary flex-1" (click)="viewExpenses(trip)">🧾 Expense</button>
               </div>
             </div>
           </div>
@@ -417,6 +417,38 @@ import { UserProfile, TripRequest, Expense } from '../../../core/models/models';
         </div>
       </div>
     </div>
+
+    <!-- Smooth Trip Details Modal Popup -->
+    <div class="modal-overlay" [class.active]="showDetailsModal" (click)="showDetailsModal = false">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Trip #{{ selectedTrip?.id }} Summary</h3>
+          <button class="modal-close" (click)="showDetailsModal = false">✕</button>
+        </div>
+        <div class="modal-body" *ngIf="selectedTrip">
+          <div class="flex justify-between items-center mb-4 p-3 rounded bg-primary">
+            <div>
+              <h4 class="text-base font-bold">{{ selectedTrip.destination }}</h4>
+              <span class="text-xs text-secondary">{{ selectedTrip.startDate }} → {{ selectedTrip.endDate }}</span>
+            </div>
+            <span class="badge" [ngClass]="getBadgeClass(selectedTrip.status || '')">{{ selectedTrip.status }}</span>
+          </div>
+
+          <div class="details-list">
+            <div class="detail-row"><span class="detail-label">Project Number</span><strong>{{ selectedTrip.projectNo }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Client ID</span><strong>{{ selectedTrip.clientId }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Estimated Cost</span><strong>₹{{ selectedTrip.estimatedCost }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Flight Logistics</span><strong>{{ selectedTrip.needsFlight ? 'Required' : 'Not Required' }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Hotel Accommodation</span><strong>{{ selectedTrip.needsHotel ? 'Required' : 'Not Required' }}</strong></div>
+            <div class="detail-row"><span class="detail-label">Cab Transfer</span><strong>{{ selectedTrip.needsCab ? 'Required' : 'Not Required' }}</strong></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showDetailsModal = false">Close</button>
+          <button *ngIf="selectedTrip?.status === 'ACTIVE'" class="btn btn-primary" (click)="showDetailsModal = false; viewTracking(selectedTrip!)">Track Timeline</button>
+        </div>
+      </div>
+    </div>
   `,
   styles: [`
     .dashboard-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
@@ -532,6 +564,10 @@ export class EmployeeDashboardComponent implements OnInit {
   showModal = false;
   modalTitle = '';
   modalMessage = '';
+
+  // Details Modal
+  showDetailsModal = false;
+  selectedTrip: TripRequest | null = null;
 
   constructor(
     private authService: AuthService,
@@ -693,6 +729,11 @@ export class EmployeeDashboardComponent implements OnInit {
 
   triggerSOS(): void {
     this.showAlert('SOS Alert Triggered', 'Emergency SOS notification dispatched to Manager and Corporate Travel Desk. Emergency team contacted.');
+  }
+
+  openTripDetails(trip: TripRequest): void {
+    this.selectedTrip = trip;
+    this.showDetailsModal = true;
   }
 
   showAlert(title: string, message: string): void {
