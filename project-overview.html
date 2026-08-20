@@ -33,22 +33,22 @@
   /* Header */
   .header-block {
     text-align: center;
-    border-bottom: 2px solid #0F172A;
+    border-bottom: 2.5px solid #0F172A;
     padding-bottom: 4px;
     margin-bottom: 5px;
   }
   .main-heading {
-    font-size: 15px;
+    font-size: 15.5px;
     font-weight: 900;
-    letter-spacing: 2.5px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     color: #0F172A;
   }
   .sub-heading {
-    font-size: 7px;
+    font-size: 7.5px;
     font-weight: 600;
     color: #64748B;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     margin-top: 1px;
   }
 
@@ -69,8 +69,8 @@
   .section-label::before, .section-label::after {
     content: '';
     display: inline-block;
-    height: 1px;
-    width: 36px;
+    height: 1.2px;
+    width: 40px;
     background: #CBD5E1;
   }
 
@@ -78,11 +78,11 @@
   .stakeholders-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
+    gap: 5px;
     background: #F8FAFC;
-    border: 1.2px solid #0F172A;
-    border-radius: 4px;
-    padding: 4px 6px;
+    border: 1.4px solid #0F172A;
+    border-radius: 5px;
+    padding: 5px 6px;
     margin-bottom: 5px;
   }
   .stakeholder-card {
@@ -92,46 +92,48 @@
     text-align: center;
   }
   .stakeholder-avatar {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: #0F172A;
     color: white;
-    font-size: 7.5px;
+    font-size: 8px;
     font-weight: 800;
     display: grid;
     place-items: center;
     margin-bottom: 2px;
   }
   .stakeholder-name {
-    font-size: 6.8px;
+    font-size: 7.2px;
     font-weight: 800;
     color: #0F172A;
-    line-height: 1.1;
+    line-height: 1.15;
   }
   .stakeholder-desc {
-    font-size: 5.5px;
+    font-size: 5.8px;
     font-weight: 600;
     color: #64748B;
     margin-top: 1px;
   }
 
-  /* Main Flow Grid */
+  /* Main Flow Grid Container */
   .flow-grid {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
     flex: 1;
+    gap: 0;
   }
 
   /* Phase Box */
   .bp-box {
-    border: 1.2px solid #0F172A;
+    border: 1.3px solid #0F172A;
     border-radius: 4px;
     background: #FFFFFF;
-    padding: 4px 6px;
+    padding: 5px 7px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     position: relative;
   }
   .bp-box.highlight-purple {
@@ -148,29 +150,29 @@
   }
 
   .bp-header {
-    font-size: 6.8px;
+    font-size: 7.2px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: #0F172A;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px dashed #CBD5E1;
-    padding-bottom: 1.5px;
+    padding-bottom: 2px;
   }
   .bp-tag {
-    font-size: 5.2px;
+    font-size: 5.5px;
     font-weight: 800;
-    padding: 0.5px 3.5px;
+    padding: 1px 4px;
     border-radius: 2px;
     background: #E2E8F0;
     color: #334155;
   }
 
   .ui-title {
-    font-size: 6.8px;
+    font-size: 7px;
     font-weight: 800;
     color: #0F172A;
     margin-bottom: 2px;
@@ -181,7 +183,7 @@
     border: 0.8px solid #94A3B8;
     border-radius: 3px;
     background: #FAFAFA;
-    padding: 3px 4px;
+    padding: 4px 5px;
   }
   .wf-window-bar {
     display: flex;
@@ -202,9 +204,9 @@
     border: 0.8px solid #94A3B8;
     background: #FFFFFF;
     border-radius: 2px;
-    height: 11px;
+    height: 12px;
     padding: 0 4px;
-    font-size: 5.5px;
+    font-size: 6px;
     color: #334155;
     display: flex;
     align-items: center;
@@ -214,8 +216,8 @@
     background: #0F172A;
     color: #FFFFFF;
     border-radius: 2px;
-    padding: 1.5px 5px;
-    font-size: 5.8px;
+    padding: 2px 6px;
+    font-size: 6.2px;
     font-weight: 800;
     text-align: center;
     display: inline-block;
@@ -225,8 +227,8 @@
     border: 1px solid #15803D;
     color: white;
     border-radius: 2px;
-    padding: 1.5px 4px;
-    font-size: 5.6px;
+    padding: 2px 5px;
+    font-size: 6.2px;
     font-weight: 800;
     text-align: center;
   }
@@ -235,8 +237,8 @@
     border: 1px solid #DC2626;
     color: white;
     border-radius: 2px;
-    padding: 1.5px 4px;
-    font-size: 5.6px;
+    padding: 2px 5px;
+    font-size: 6.2px;
     font-weight: 800;
     text-align: center;
   }
@@ -245,28 +247,28 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 2px;
-    font-size: 5.3px;
+    font-size: 5.8px;
   }
   .wf-table th, .wf-table td {
     border: 0.8px solid #CBD5E1;
-    padding: 1.5px 3px;
+    padding: 2px 3px;
     text-align: center;
   }
   .wf-table th {
     background: #F1F5F9;
-    font-weight: 700;
+    font-weight: 800;
     color: #334155;
   }
 
   .bullet-list {
     list-style: none;
-    font-size: 5.8px;
+    font-size: 6.2px;
     color: #334155;
-    line-height: 1.35;
+    line-height: 1.4;
   }
   .bullet-list li {
     position: relative;
-    padding-left: 6px;
+    padding-left: 7px;
   }
   .bullet-list li::before {
     content: '•';
@@ -281,10 +283,10 @@
 
   /* Decision Box */
   .decision-box {
-    border: 1.3px solid #B45309;
+    border: 1.4px solid #B45309;
     background: #FFFBEB;
     border-radius: 4px;
-    padding: 4px 6px;
+    padding: 5px 7px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -292,22 +294,22 @@
   .decision-rules {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5px 3px;
+    gap: 2px 4px;
     margin-top: 2px;
   }
   .decision-rule-item {
-    font-size: 5.5px;
-    font-weight: 600;
+    font-size: 6px;
+    font-weight: 700;
     color: #78350F;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 2.5px;
   }
   .decision-rule-item::before {
     content: '✓';
     font-weight: 900;
     color: #B45309;
-    font-size: 5.5px;
+    font-size: 6.5px;
   }
 
   /* 7-Milestone Grid */
@@ -328,33 +330,33 @@
     text-align: center;
   }
   .ms-badge {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: #0F172A;
     color: white;
-    font-size: 5.5px;
+    font-size: 6px;
     font-weight: 800;
     display: grid;
     place-items: center;
-    margin-bottom: 1px;
+    margin-bottom: 1.5px;
   }
   .ms-badge.done { background: #15803D; }
   .ms-name {
-    font-size: 4.8px;
-    font-weight: 700;
+    font-size: 5.2px;
+    font-weight: 800;
     color: #0F172A;
-    line-height: 1.1;
+    line-height: 1.15;
   }
   .ms-proof-tag {
-    font-size: 4.3px;
+    font-size: 4.6px;
     font-weight: 800;
     color: #15803D;
     background: #DCFCE7;
     border: 0.5px solid #86EFAC;
     padding: 0.5px 2px;
     border-radius: 2px;
-    margin-top: 1px;
+    margin-top: 1.5px;
   }
 
   /* Connectors */
@@ -362,21 +364,22 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 6px;
+    height: 8px;
   }
   .arrow-svg {
     width: 100%;
-    height: 6px;
+    height: 8px;
   }
 
   /* Footer */
   .footer-bar {
-    border-top: 1.5px solid #0F172A;
+    border-top: 1.8px solid #0F172A;
     padding-top: 3px;
+    margin-top: 2px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 5.8px;
+    font-size: 6.2px;
     font-weight: 600;
     color: #475569;
   }
@@ -431,38 +434,38 @@
   <div class="flow-grid">
 
     <!-- ROW 1: Landing & Login (Phase 1) + Employee Dashboard (Phase 2) -->
-    <div style="display: grid; grid-template-columns: 1fr 1.08fr; gap: 6px;">
+    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 6px; flex: 1.1;">
       <!-- Phase 1 -->
       <div class="bp-box">
         <div class="bp-header">
-          <span>Phase 1: Landing & Login</span>
+          <span>Phase 1: Landing & Login Screen</span>
           <span class="bp-tag">Auth Module</span>
         </div>
-        <div style="display: flex; gap: 5px; margin-top: 1px;">
-          <div style="flex: 1.1;">
+        <div style="display: flex; gap: 6px; margin-top: 1px; flex: 1; align-items: center;">
+          <div style="flex: 1.15;">
             <div class="ui-title">[Emp Dash Login Screen]</div>
             <div class="wf-window">
               <div class="wf-window-bar">
                 <div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div>
-                <span style="font-size:4.5px; color:#94A3B8; margin-left:2px;">travelos/auth</span>
+                <span style="font-size:5px; color:#94A3B8; margin-left:3px;">travelos/auth</span>
               </div>
-              <div style="display:flex; flex-direction:column; gap: 1.5px;">
-                <div class="wf-input"><span style="color:#94A3B8; margin-right:3px;">ID:</span> EMP001, EMP002</div>
-                <div class="wf-input"><span style="color:#94A3B8; margin-right:3px;">PW:</span> ••••••••••••</div>
-                <div class="wf-btn-dark" style="margin-top: 1px; padding:1px;">Log In → JWT Bearer</div>
+              <div style="display:flex; flex-direction:column; gap: 2px;">
+                <div class="wf-input"><span style="color:#94A3B8; margin-right:3px;">Emp ID:</span> EMP001 / EMP002</div>
+                <div class="wf-input"><span style="color:#94A3B8; margin-right:3px;">Password:</span> ••••••••••••</div>
+                <div class="wf-btn-dark" style="margin-top: 1px; padding:1.5px 4px;">Log In → JWT Bearer</div>
               </div>
             </div>
           </div>
-          <div style="flex: 0.9; border-left: 1px dashed #CBD5E1; padding-left: 5px;">
+          <div style="flex: 0.95; border-left: 1px dashed #CBD5E1; padding-left: 6px;">
             <div class="ui-title">[Elevated Role Cards]</div>
-            <ul class="bullet-list" style="font-size: 5.2px;">
+            <ul class="bullet-list" style="font-size: 5.8px;">
               <li><strong>Manager:</strong> Passcode <code>111111</code></li>
               <li><strong>Travel Desk:</strong> Passcode <code>222222</code></li>
               <li><strong>Finance:</strong> Passcode <code>333333</code></li>
               <li><strong>Admin:</strong> Passcode <code>444444</code></li>
             </ul>
-            <div style="font-size:4.8px; color:#64748B; margin-top:2px;">
-              * Direct role entry without username.
+            <div style="font-size:5.2px; color:#64748B; margin-top:2px; line-height:1.2;">
+              * Instant role-based routing without entering employee ID.
             </div>
           </div>
         </div>
@@ -474,10 +477,10 @@
           <span>Phase 2: Employee Dashboard</span>
           <span class="bp-tag">Employee View</span>
         </div>
-        <div style="display: flex; gap: 5px; margin-top: 1px;">
+        <div style="display: flex; gap: 6px; margin-top: 1px; flex: 1; align-items: center;">
           <div style="width: 35%; border-right: 1px solid #E2E8F0; padding-right: 4px;">
             <div class="ui-title">[Profile Summary]</div>
-            <ul class="bullet-list" style="font-size: 5.2px;">
+            <ul class="bullet-list" style="font-size: 5.8px;">
               <li><strong>Name:</strong> Arjun Sharma</li>
               <li><strong>DOJ / Dept:</strong> Active (Engg)</li>
               <li><strong>Govt ID:</strong> Verified</li>
@@ -485,9 +488,9 @@
             </ul>
           </div>
           <div style="flex: 1;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
               <span class="ui-title">[Trip Registry]</span>
-              <span class="wf-btn-dark" style="font-size: 5px; padding: 1px 3.5px;">+ Raise Travel Request</span>
+              <span class="wf-btn-dark" style="font-size: 5.5px; padding: 1.5px 4px;">+ Raise Travel Request</span>
             </div>
             <table class="wf-table">
               <tr>
@@ -496,12 +499,12 @@
                 <th>Upcoming</th>
               </tr>
               <tr>
-                <td style="color:#15803D; font-weight:700;">Live Tracking</td>
-                <td>Past History</td>
-                <td>Pending Approval</td>
+                <td style="color:#15803D; font-weight:800;">TRIP-1024 (Live)</td>
+                <td>TRIP-0982 (Done)</td>
+                <td>TRIP-1055 (Pending)</td>
               </tr>
             </table>
-            <div style="font-size: 4.8px; color:#64748B; margin-top: 2px;">
+            <div style="font-size: 5.2px; color:#64748B; margin-top: 2px; line-height: 1.2;">
               Access live tracking, voucher downloads & closure triggers.
             </div>
           </div>
@@ -511,52 +514,56 @@
 
     <!-- CONNECTOR 1 -> 2 -->
     <div class="arrow-connector">
-      <svg class="arrow-svg" viewBox="0 0 400 6" preserveAspectRatio="none">
-        <line x1="80" y1="0" x2="80" y2="3" stroke="#0F172A" stroke-width="1"/>
-        <line x1="80" y1="3" x2="200" y2="3" stroke="#0F172A" stroke-width="1"/>
-        <line x1="200" y1="3" x2="200" y2="6" stroke="#0F172A" stroke-width="1"/>
-        <polygon points="198,4 200,6 202,4" fill="#0F172A"/>
+      <svg class="arrow-svg" viewBox="0 0 400 8" preserveAspectRatio="none">
+        <line x1="80" y1="0" x2="80" y2="4" stroke="#0F172A" stroke-width="1.2"/>
+        <line x1="80" y1="4" x2="200" y2="4" stroke="#0F172A" stroke-width="1.2"/>
+        <line x1="200" y1="4" x2="200" y2="8" stroke="#0F172A" stroke-width="1.2"/>
+        <polygon points="197,5 200,8 203,5" fill="#0F172A"/>
       </svg>
     </div>
 
     <!-- ROW 2: Phase 3 -> Phase 4 -> Phase 5 -->
-    <div style="display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 5px;">
+    <div style="display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 6px; flex: 1.25;">
       <!-- Phase 3 -->
       <div class="bp-box">
         <div class="bp-header">
           <span>Phase 3: Create & Submit Request</span>
           <span class="bp-tag">Form Input</span>
         </div>
-        <div class="ui-title">[Raise Travel Request Form]</div>
-        <ul class="bullet-list">
-          <li><strong>Project & Client:</strong> Project No. + Client ID</li>
-          <li><strong>Dest & Dates:</strong> Origin → Destination + Travel Duration</li>
-          <li><strong>Needs:</strong> ☑ Flight ☑ Hotel ☑ Cab ☑ Extra Luggage</li>
-          <li><strong>Asset Allocation:</strong> Hardware / Laptops / Devices</li>
-          <li><strong>Estimated Cost:</strong> Initial Budget Forecast</li>
-        </ul>
+        <div>
+          <div class="ui-title">[Raise Travel Request Form]</div>
+          <ul class="bullet-list">
+            <li><strong>Project & Client:</strong> Project #8492 · Client #C-901</li>
+            <li><strong>Dest & Duration:</strong> Mumbai → London (7 Days)</li>
+            <li><strong>Needs:</strong> ☑ Flight ☑ Hotel ☑ Cab ☑ Extra Luggage</li>
+            <li><strong>Asset Allocation:</strong> ThinkPad X1 + Testing Device</li>
+            <li><strong>Estimated Cost:</strong> Total Budget: $3,450</li>
+          </ul>
+        </div>
         <div style="text-align: right; margin-top: 2px;">
-          <span class="wf-btn-dark" style="font-size: 5.2px;">[Submit Request] → PENDING_AUTO_VAL</span>
+          <span class="wf-btn-dark" style="font-size: 5.8px;">[Submit Request] → PENDING_AUTO_VAL</span>
         </div>
       </div>
 
       <!-- Phase 4 -->
       <div class="decision-box">
-        <div class="bp-header" style="border-color: #FDE68A;">
-          <span style="color:#92400E;">Phase 4: Automatic Validation</span>
-          <span class="bp-tag" style="background:#FEF3C7; color:#92400E;">5-Check Engine</span>
+        <div>
+          <div class="bp-header" style="border-color: #FDE68A;">
+            <span style="color:#92400E;">Phase 4: Automatic Validation</span>
+            <span class="bp-tag" style="background:#FEF3C7; color:#92400E;">5-Check Engine</span>
+          </div>
+          <div class="ui-title" style="color:#92400E; text-align:center;">[AUTOMATIC VALIDATION]</div>
+          <div class="decision-rules">
+            <div class="decision-rule-item">Is Emp Active?</div>
+            <div class="decision-rule-item">Does Project Exist?</div>
+            <div class="decision-rule-item">Is Valid Client?</div>
+            <div class="decision-rule-item">Budget Available?</div>
+          </div>
+          <div class="decision-rule-item" style="margin-top: 2px;">Mandatory Details & Company Policy OK?</div>
         </div>
-        <div class="ui-title" style="color:#92400E; text-align:center;">[AUTOMATIC VALIDATION]</div>
-        <div class="decision-rules">
-          <div class="decision-rule-item">Is Emp Active?</div>
-          <div class="decision-rule-item">Does Project Exist?</div>
-          <div class="decision-rule-item">Is Valid Client?</div>
-          <div class="decision-rule-item">Budget Available?</div>
-        </div>
-        <div class="decision-rule-item" style="margin-top: 1.5px;">Mandatory Details & Policy OK?</div>
-        <div style="margin-top: 2px; display:flex; justify-content:space-between; border-top: 1px dashed #FDE68A; padding-top: 1.5px;">
-          <span style="font-size: 5.2px; font-weight:800; color:#15803D;">✓ Yes → PENDING_MGR</span>
-          <span style="font-size: 5.2px; font-weight:800; color:#DC2626;">✗ No → REJECTED_SYS</span>
+        <div style="margin-top: 3px; display:flex; justify-content:space-between; border-top: 1px dashed #FDE68A; padding-top: 2px;">
+          <span style="font-size: 5.8px; font-weight:900; color:#15803D;">✓ Yes → PENDING_MGR</span>
+          <span style="font-size: 5.8px; font-weight:900; color:#DC2626;">✗ No → REJECTED_SYS</span>
         </div>
       </div>
 
@@ -566,50 +573,59 @@
           <span>Phase 5: Manager Review</span>
           <span class="bp-tag">Manager</span>
         </div>
-        <div class="ui-title">[Manager Dashboard Queue]</div>
-        <ul class="bullet-list">
-          <li><strong>Audit Review:</strong> Business purpose & budget</li>
-          <li><strong>Asset Check:</strong> Verify hardware allocation</li>
-          <li><strong>Approval Remarks:</strong> Mandatory feedback input</li>
-        </ul>
-        <div style="margin-top: 2px; display: flex; gap: 3px;">
-          <span class="wf-btn-green" style="flex:1;">[APPROVE]</span>
-          <span class="wf-btn-red" style="flex:1;">[REJECT]</span>
+        <div>
+          <div class="ui-title">[Manager Dashboard Queue]</div>
+          <div style="display:flex; gap:4px; font-size:5.5px; background:#F8FAFC; padding:2px 4px; border:0.8px solid #CBD5E1; border-radius:2px; margin-bottom:2px;">
+            <span>Pending: <strong>3</strong></span> | <span>Approved: <strong>14</strong></span> | <span>Rejected: <strong>1</strong></span>
+          </div>
+          <ul class="bullet-list">
+            <li><strong>Audit Review:</strong> Business purpose & budget fit</li>
+            <li><strong>Asset Check:</strong> Verify hardware allocation</li>
+            <li><strong>Remarks:</strong> Mandatory feedback input</li>
+          </ul>
         </div>
-        <div style="font-size: 4.8px; color:#64748B; text-align:center; margin-top: 1.5px;">
-          Moves to <strong>APPROVED</strong> on manager sign-off.
+        <div>
+          <div style="margin-top: 2px; display: flex; gap: 3px;">
+            <span class="wf-btn-green" style="flex:1;">[APPROVE]</span>
+            <span class="wf-btn-red" style="flex:1;">[REJECT]</span>
+          </div>
+          <div style="font-size: 5.2px; color:#64748B; text-align:center; margin-top: 1px;">
+            Status updates to <strong>APPROVED</strong> on manager sign-off.
+          </div>
         </div>
       </div>
     </div>
 
     <!-- CONNECTOR 2 -> 3 -->
     <div class="arrow-connector">
-      <svg class="arrow-svg" viewBox="0 0 400 6" preserveAspectRatio="none">
-        <line x1="330" y1="0" x2="330" y2="3" stroke="#0F172A" stroke-width="1"/>
-        <line x1="330" y1="3" x2="100" y2="3" stroke="#0F172A" stroke-width="1"/>
-        <line x1="100" y1="3" x2="100" y2="6" stroke="#0F172A" stroke-width="1"/>
-        <polygon points="98,4 100,6 102,4" fill="#0F172A"/>
+      <svg class="arrow-svg" viewBox="0 0 400 8" preserveAspectRatio="none">
+        <line x1="330" y1="0" x2="330" y2="4" stroke="#0F172A" stroke-width="1.2"/>
+        <line x1="330" y1="4" x2="100" y2="4" stroke="#0F172A" stroke-width="1.2"/>
+        <line x1="100" y1="4" x2="100" y2="8" stroke="#0F172A" stroke-width="1.2"/>
+        <polygon points="97,5 100,8 103,5" fill="#0F172A"/>
       </svg>
     </div>
 
     <!-- ROW 3: Travel Desk (Phase 6) & Active Trip Live Tracking (Phase 7) -->
-    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 5px;">
+    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 6px; flex: 1.25;">
       <!-- Phase 6 -->
       <div class="bp-box highlight-purple">
         <div class="bp-header">
           <span style="color:#6B21A8;">Phase 6: Travel Desk & Booking</span>
           <span class="bp-tag" style="background:#F3E8FF; color:#6B21A8;">Travel Desk</span>
         </div>
-        <div class="ui-title">[Travel Team (Travel Desk) Execution]</div>
-        <ul class="bullet-list">
-          <li><strong>Flight/Train Booking:</strong> PNR, departure & landing timings</li>
-          <li><strong>Cab Assignment:</strong> Cab number, Driver name & contact</li>
-          <li><strong>Hotel Reservation:</strong> Booking confirmation ID & check-in details</li>
-          <li><strong>Asset Handover:</strong> Physical asset IDs allocated & logged</li>
-          <li><strong>Checklist Timeline:</strong> Pre-fills & schedules all 7 milestone times</li>
-        </ul>
+        <div>
+          <div class="ui-title">[Travel Team (Travel Desk) Execution]</div>
+          <ul class="bullet-list">
+            <li><strong>Flight Booking:</strong> PNR: AI-204 · Dep: 08:00 AM · Arr: 11:00 AM</li>
+            <li><strong>Cab Assignment:</strong> Cab: DL-01-AB-1234 (Ramesh Kumar)</li>
+            <li><strong>Hotel Reservation:</strong> Grand Hyatt (Booking ID: HBK-90234)</li>
+            <li><strong>Asset Handover:</strong> HW-Asset-8492 logged & dispatched</li>
+            <li><strong>Checklist Timeline:</strong> Pre-fills & schedules all 7 milestone times</li>
+          </ul>
+        </div>
         <div style="text-align: right; margin-top: 2px;">
-          <span class="wf-btn-dark" style="background:#7E22CE; border-color:#7E22CE; font-size: 5.2px;">Activate Itinerary → Status: [ACTIVE]</span>
+          <span class="wf-btn-dark" style="background:#7E22CE; border-color:#7E22CE; font-size: 5.8px;">Activate Itinerary → Status: [ACTIVE]</span>
         </div>
       </div>
 
@@ -619,45 +635,47 @@
           <span style="color:#166534;">Phase 7: Active Trip & Live Tracking</span>
           <span class="bp-tag" style="background:#DCFCE7; color:#166534;">Live Verification</span>
         </div>
-        <div class="ui-title" style="color:#166534;">[7-Milestone Timeline with Mandatory Verification]</div>
-        <div class="milestones-strip">
-          <div class="ms-box">
-            <div class="ms-badge done">1</div>
-            <div class="ms-name">Flight Board</div>
-            <div class="ms-proof-tag">🔒 Seat No</div>
-          </div>
-          <div class="ms-box">
-            <div class="ms-badge done">2</div>
-            <div class="ms-name">Flight Land</div>
-            <div class="ms-proof-tag">🔒 Terminal</div>
-          </div>
-          <div class="ms-box">
-            <div class="ms-badge done">3</div>
-            <div class="ms-name">Cab Pickup</div>
-            <div class="ms-proof-tag">🔒 OTP/Code</div>
-          </div>
-          <div class="ms-box">
-            <div class="ms-badge done">4</div>
-            <div class="ms-name">Hotel In</div>
-            <div class="ms-proof-tag">🔒 Book ID</div>
-          </div>
-          <div class="ms-box">
-            <div class="ms-badge">5</div>
-            <div class="ms-name">Hotel Out</div>
-            <div class="ms-proof-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
-          </div>
-          <div class="ms-box">
-            <div class="ms-badge">6</div>
-            <div class="ms-name">Return Flt</div>
-            <div class="ms-proof-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
-          </div>
-          <div class="ms-box">
-            <div class="ms-badge">7</div>
-            <div class="ms-name">Journey End</div>
-            <div class="ms-proof-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
+        <div>
+          <div class="ui-title" style="color:#166534;">[7-Milestone Timeline with Mandatory Verification]</div>
+          <div class="milestones-strip">
+            <div class="ms-box">
+              <div class="ms-badge done">1</div>
+              <div class="ms-name">Flight Board</div>
+              <div class="ms-proof-tag">🔒 Seat No</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-badge done">2</div>
+              <div class="ms-name">Flight Land</div>
+              <div class="ms-proof-tag">🔒 Terminal</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-badge done">3</div>
+              <div class="ms-name">Cab Pickup</div>
+              <div class="ms-proof-tag">🔒 OTP/Code</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-badge done">4</div>
+              <div class="ms-name">Hotel In</div>
+              <div class="ms-proof-tag">🔒 Book ID</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-badge">5</div>
+              <div class="ms-name">Hotel Out</div>
+              <div class="ms-proof-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-badge">6</div>
+              <div class="ms-name">Return Flt</div>
+              <div class="ms-proof-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-badge">7</div>
+              <div class="ms-name">Journey End</div>
+              <div class="ms-proof-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
+            </div>
           </div>
         </div>
-        <div style="font-size: 4.8px; color:#166534; margin-top: 2px; font-weight:600;">
+        <div style="font-size: 5.5px; color:#166534; margin-top: 2px; font-weight:700;">
           * Milestone accuracy: On-Time / Delayed / Early tracked vs Travel Desk schedule.
         </div>
       </div>
@@ -665,27 +683,29 @@
 
     <!-- CONNECTOR 3 -> 4 -->
     <div class="arrow-connector">
-      <svg class="arrow-svg" viewBox="0 0 400 6" preserveAspectRatio="none">
-        <line x1="200" y1="0" x2="200" y2="6" stroke="#0F172A" stroke-width="1"/>
-        <polygon points="198,4 200,6 202,4" fill="#0F172A"/>
+      <svg class="arrow-svg" viewBox="0 0 400 8" preserveAspectRatio="none">
+        <line x1="200" y1="0" x2="200" y2="8" stroke="#0F172A" stroke-width="1.2"/>
+        <polygon points="197,5 200,8 203,5" fill="#0F172A"/>
       </svg>
     </div>
 
     <!-- ROW 4: Financial Settlement (Phase 8) & Trip Closure (Phase 9) -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1.15;">
       <!-- Phase 8 -->
       <div class="bp-box highlight-amber">
         <div class="bp-header">
           <span style="color:#92400E;">Phase 8: Financial Expense Settlement</span>
           <span class="bp-tag" style="background:#FEF3C7; color:#92400E;">Finance (Accounts)</span>
         </div>
-        <div class="ui-title">[Financial Team (Accounts) Review]</div>
-        <ul class="bullet-list">
-          <li><strong>Upload Bills:</strong> Employee uploads extra expense receipts (JPEG / PDF).</li>
-          <li><strong>Audit & Verification:</strong> Accounts team reviews claim categories & amounts.</li>
-          <li><strong>Salary Reimbursement:</strong> Approved amount is <strong>CREDITED</strong> to employee salary.</li>
-        </ul>
-        <div style="font-size: 5px; color:#B45309; font-weight:700; margin-top: 2px;">
+        <div>
+          <div class="ui-title">[Financial Team (Accounts) Review]</div>
+          <ul class="bullet-list">
+            <li><strong>Upload Bills:</strong> Employee uploads extra receipts (Meals, Cabs, Emergency).</li>
+            <li><strong>Audit & Verification:</strong> Accounts team reviews claim categories & bills.</li>
+            <li><strong>Salary Reimbursement:</strong> Approved amount is <strong>CREDITED</strong> to employee salary.</li>
+          </ul>
+        </div>
+        <div style="font-size: 5.5px; color:#B45309; font-weight:800; margin-top: 2px;">
           * Approved expenses transition to status 'CREDITED' prior to trip closure.
         </div>
       </div>
@@ -696,16 +716,18 @@
           <span>Phase 9: Trip Closure & Reconciliation</span>
           <span class="bp-tag">4-Condition Gate</span>
         </div>
-        <div class="ui-title">[Close Trip Automated Verification]</div>
-        <ul class="bullet-list">
-          <li><strong>① Trip Journey Ended:</strong> Milestone 7 verified with arrival proof.</li>
-          <li><strong>② Assets Returned:</strong> Physical hardware logged as returned.</li>
-          <li><strong>③ Expenses Settled:</strong> All expense claims in <code>CREDITED</code> state.</li>
-          <li><strong>④ Dates & Policy:</strong> Current date is past scheduled end date.</li>
-        </ul>
+        <div>
+          <div class="ui-title">[Close Trip Automated Verification]</div>
+          <ul class="bullet-list">
+            <li><strong>① Trip Journey Ended:</strong> Milestone 7 verified with arrival proof.</li>
+            <li><strong>② Assets Returned:</strong> Physical hardware logged as returned.</li>
+            <li><strong>③ Expenses Settled:</strong> All expense claims in <code>CREDITED</code> state.</li>
+            <li><strong>④ Dates & Policy:</strong> Current date is past scheduled end date.</li>
+          </ul>
+        </div>
         <div style="margin-top: 2px; display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size: 5.2px; font-weight:700; color:#475569;">All 4 Verified → Finalize</span>
-          <span class="wf-btn-dark" style="font-size: 5.2px;">[CLOSE TRIP] → Status: CLOSED</span>
+          <span style="font-size: 5.8px; font-weight:800; color:#475569;">All 4 Verified → Finalize</span>
+          <span class="wf-btn-dark" style="font-size: 5.8px;">[CLOSE TRIP] → Status: CLOSED</span>
         </div>
       </div>
     </div>
