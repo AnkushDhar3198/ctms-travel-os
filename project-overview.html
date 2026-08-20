@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TravelOS — System Architecture & Flow</title>
+<title>TravelOS — System Architecture & Flow Blueprint</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -16,11 +16,11 @@
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: #F8FAFC;
-    color: #1E293B;
+    color: #0F172A;
     width: 210mm;
     height: 297mm;
     overflow: hidden;
-    padding: 12mm 12mm 10mm 12mm;
+    padding: 10mm 11mm 8mm 11mm;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -30,46 +30,77 @@
 
   .mono { font-family: 'JetBrains Mono', monospace; }
 
-  /* Header */
+  /* ===== HEADER ===== */
   .header {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: #FFFFFF;
-    border-radius: 10px;
-    padding: 8px 16px;
     border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 8px 14px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    margin-bottom: 8px;
+  }
+  .hdr-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .logo-box {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #0F172A, #334155);
+    border-radius: 6px;
+    color: #FFFFFF;
+    font-weight: 900;
+    font-size: 11px;
+    display: grid;
+    place-items: center;
+    letter-spacing: -0.5px;
   }
   .header h1 {
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 1.8px;
+    font-size: 14.5px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: #0F172A;
   }
   .header p {
-    font-size: 7.5px;
+    font-size: 7px;
     font-weight: 500;
     color: #64748B;
-    letter-spacing: 0.3px;
-    margin-top: 2px;
+    margin-top: 1px;
   }
-
-  /* Section Title */
-  .section-title {
-    font-size: 7.5px;
+  .pills {
+    display: flex;
+    gap: 4px;
+  }
+  .pl {
+    font-size: 6.2px;
     font-weight: 700;
-    text-align: center;
+    padding: 2.5px 7px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .pl-indigo { background: #EEF2FF; color: #4F46E5; border-color: #C7D2FE; }
+  .pl-emerald { background: #ECFDF5; color: #059669; border-color: #A7F3D0; }
+  .pl-amber { background: #FFFBEB; color: #D97706; border-color: #FDE68A; }
+  .pl-purple { background: #FAF5FF; color: #7C3AED; border-color: #DDD6FE; }
+
+  /* ===== SECTION LABELS ===== */
+  .sec-label {
+    font-size: 7.5px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.4px;
     color: #64748B;
-    margin-bottom: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
+    margin: 4px 0 3px 0;
   }
-  .section-title::before, .section-title::after {
+  .sec-label::before, .sec-label::after {
     content: '';
     display: inline-block;
     height: 1px;
@@ -77,68 +108,65 @@
     background: #CBD5E1;
   }
 
-  /* Stakeholders Grid */
-  .stakeholders-grid {
+  /* ===== STAKEHOLDERS ===== */
+  .stakeholders-strip {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
+    gap: 7px;
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+    border-radius: 8px;
+    padding: 6px 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
   }
-  .stakeholder-node {
+  .sh-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-  .stakeholder-icon {
-    width: 22px;
-    height: 22px;
-    border-radius: 7px;
-    background: #F1F5F9;
-    color: #0F172A;
-    border: 1px solid #E2E8F0;
+  .sh-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
     font-size: 8.5px;
-    font-weight: 700;
+    font-weight: 800;
     display: grid;
     place-items: center;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
+    color: white;
   }
-  .stakeholder-name {
-    font-size: 7.5px;
-    font-weight: 700;
+  .sh-name {
+    font-size: 7.2px;
+    font-weight: 800;
     color: #0F172A;
+    line-height: 1.1;
   }
-  .stakeholder-sub {
-    font-size: 6.2px;
+  .sh-sub {
+    font-size: 6px;
     color: #64748B;
     font-weight: 500;
-    margin-top: 1.5px;
+    margin-top: 1px;
   }
 
-  /* Main Flow Container */
-  .flow-container {
+  /* ===== MAIN FLOW CONTAINER ===== */
+  .flow-wrap {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    flex: 1;
-    gap: 0;
+    gap: 7px;
+    margin: 4px 0;
   }
 
-  /* Modern Clean Cards */
+  /* Compact Creative Cards */
   .card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 9px 12px;
+    border-radius: 8px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    gap: 4px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
     position: relative;
   }
   .card.tint-indigo { border-color: #E0E7FF; }
@@ -146,224 +174,261 @@
   .card.tint-emerald { border-color: #D1FAE5; }
   .card.tint-purple { border-color: #F3E8FF; }
 
-  /* Card Top Bar */
-  .card-top {
+  .card-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
-    padding-bottom: 4px;
+    padding-bottom: 3px;
     border-bottom: 1px solid #F1F5F9;
   }
   .card-title {
-    font-size: 7.8px;
-    font-weight: 700;
+    font-size: 7.5px;
+    font-weight: 800;
     color: #0F172A;
-    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
-  .badge {
-    font-size: 5.8px;
+  .card-badge {
+    font-size: 5.6px;
     font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 12px;
-    letter-spacing: 0.3px;
+    padding: 1.5px 5px;
+    border-radius: 3px;
   }
-  .badge-slate { background: #F1F5F9; color: #475569; }
-  .badge-indigo { background: #EEF2FF; color: #4F46E5; }
-  .badge-emerald { background: #ECFDF5; color: #059669; }
-  .badge-amber { background: #FFFBEB; color: #D97706; }
-  .badge-purple { background: #FAF5FF; color: #9333EA; }
+  .bg-indigo { background: #EEF2FF; color: #4F46E5; }
+  .bg-slate { background: #F1F5F9; color: #475569; }
+  .bg-amber { background: #FFFBEB; color: #D97706; }
+  .bg-emerald { background: #ECFDF5; color: #059669; }
+  .bg-purple { background: #FAF5FF; color: #7C3AED; }
 
-  .ui-label {
-    font-size: 7px;
-    font-weight: 700;
-    color: #334155;
-    margin-bottom: 3px;
+  .row-flex {
+    display: flex;
+    gap: 7px;
+    align-items: stretch;
   }
 
-  /* Form and Input Elements */
-  .input-box {
-    border: 1px solid #CBD5E1;
-    background: #F8FAFC;
+  .wf-window {
+    border: 0.8px solid #CBD5E1;
     border-radius: 4px;
-    height: 14px;
-    padding: 0 6px;
-    font-size: 6.5px;
+    background: #F8FAFC;
+    padding: 4px 6px;
+  }
+  .wf-input {
+    border: 0.8px solid #CBD5E1;
+    background: #FFFFFF;
+    border-radius: 3px;
+    height: 13px;
+    padding: 0 5px;
+    font-size: 6.2px;
     color: #334155;
     display: flex;
     align-items: center;
+    margin-bottom: 2px;
   }
-  .btn-primary {
-    background: #0F172A;
-    color: #FFFFFF;
-    border-radius: 5px;
-    padding: 2.5px 7px;
-    font-size: 6.5px;
-    font-weight: 600;
-    text-align: center;
-    border: none;
-    display: inline-block;
-  }
-  .btn-success {
-    background: #059669;
-    color: #FFFFFF;
-    border-radius: 5px;
+  .btn-sm {
+    border-radius: 3px;
     padding: 2.5px 6px;
-    font-size: 6.5px;
-    font-weight: 600;
-    text-align: center;
-    border: none;
-  }
-  .btn-danger {
-    background: #DC2626;
-    color: #FFFFFF;
-    border-radius: 5px;
-    padding: 2.5px 6px;
-    font-size: 6.5px;
-    font-weight: 600;
-    text-align: center;
-    border: none;
-  }
-
-  .clean-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 3px;
     font-size: 6.2px;
-  }
-  .clean-table th, .clean-table td {
-    border: 1px solid #E2E8F0;
-    padding: 3px 5px;
+    font-weight: 700;
     text-align: center;
+    display: inline-block;
+    border: none;
   }
-  .clean-table th {
-    background: #F8FAFC;
-    font-weight: 600;
-    color: #475569;
-  }
+  .btn-dark { background: #0F172A; color: white; }
+  .btn-green { background: #059669; color: white; }
+  .btn-red { background: #DC2626; color: white; }
+  .btn-purple { background: #7C3AED; color: white; }
 
-  .list-clean {
+  .compact-list {
     list-style: none;
-    font-size: 6.8px;
+    font-size: 6.5px;
     color: #475569;
-    line-height: 1.5;
+    line-height: 1.45;
   }
-  .list-clean li {
+  .compact-list li {
     position: relative;
-    padding-left: 8px;
+    padding-left: 7px;
   }
-  .list-clean li::before {
+  .compact-list li::before {
     content: '•';
     position: absolute;
     left: 0;
     color: #94A3B8;
   }
-  .list-clean strong {
+  .compact-list strong {
     color: #0F172A;
-    font-weight: 600;
+    font-weight: 700;
   }
 
-  /* Validation Decision Card */
-  .rule-grid {
+  /* Form Needs Chips */
+  .chips-wrap {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: 2px 0;
+  }
+  .chip {
+    font-size: 5.6px;
+    font-weight: 700;
+    background: #F1F5F9;
+    border: 0.8px solid #CBD5E1;
+    border-radius: 3px;
+    padding: 1.5px 5px;
+    color: #334155;
+  }
+
+  /* Table Minimal */
+  .mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 6px;
+    margin-top: 2px;
+  }
+  .mini-table th, .mini-table td {
+    border: 0.8px solid #E2E8F0;
+    padding: 2.5px 4px;
+    text-align: center;
+  }
+  .mini-table th {
+    background: #F8FAFC;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  /* Validation Rules Grid */
+  .rule-grid-2x2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3px 6px;
-    margin-top: 3px;
+    margin: 2px 0;
   }
-  .rule-item {
-    font-size: 6.5px;
-    font-weight: 600;
+  .rule-tag {
+    font-size: 6.2px;
+    font-weight: 700;
     color: #92400E;
     display: flex;
     align-items: center;
     gap: 3px;
   }
-  .rule-item::before {
+  .rule-tag::before {
     content: '✓';
-    font-weight: 800;
+    font-weight: 900;
     color: #D97706;
-    font-size: 7px;
   }
 
-  /* Timeline Strip */
-  .milestones-row {
+  /* Milestone Row */
+  .milestone-strip {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 3px;
     background: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    border-radius: 6px;
-    padding: 6px 3px;
-    margin-top: 3px;
+    border: 0.8px solid #E2E8F0;
+    border-radius: 4px;
+    padding: 5px 2px;
+    margin-top: 2px;
   }
-  .ms-col {
+  .ms-box {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-  .ms-circle {
-    width: 14px;
-    height: 14px;
+  .ms-num {
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
     background: #0F172A;
     color: white;
-    font-size: 6.5px;
-    font-weight: 700;
+    font-size: 6.2px;
+    font-weight: 800;
     display: grid;
     place-items: center;
-    margin-bottom: 2px;
+    margin-bottom: 1.5px;
   }
-  .ms-circle.done { background: #059669; }
-  .ms-lbl {
-    font-size: 5.8px;
-    font-weight: 600;
-    color: #0F172A;
-    line-height: 1.15;
-  }
-  .ms-tag {
-    font-size: 5px;
+  .ms-num.done { background: #059669; }
+  .ms-txt {
+    font-size: 5.5px;
     font-weight: 700;
+    color: #0F172A;
+    line-height: 1.1;
+  }
+  .ms-proof {
+    font-size: 4.8px;
+    font-weight: 800;
     color: #059669;
     background: #ECFDF5;
-    border: 1px solid #A7F3D0;
-    padding: 1px 3px;
-    border-radius: 3px;
-    margin-top: 2px;
+    border: 0.5px solid #86EFAC;
+    padding: 0.5px 2.5px;
+    border-radius: 2px;
+    margin-top: 1.5px;
   }
 
-  /* Arrow Connector */
-  .connector-wrap {
+  /* Connectors */
+  .conn-bar {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 9px;
-    margin: 1px 0;
+    height: 6px;
   }
-  .connector-svg {
+  .conn-svg {
     width: 100%;
-    height: 9px;
+    height: 6px;
+  }
+
+  /* Creative Specs Grid */
+  .creative-specs-strip {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 7px;
+    margin-top: 2px;
+  }
+  .spec-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 7px;
+    padding: 6px 9px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+  }
+  .spec-title {
+    font-size: 6.8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748B;
+    margin-bottom: 3px;
+  }
+  .chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .mini-chip {
+    font-size: 5.6px;
+    font-weight: 600;
+    background: #F1F5F9;
+    border: 0.6px solid #CBD5E1;
+    border-radius: 3px;
+    padding: 1.5px 4.5px;
+    color: #334155;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   /* Footer */
   .footer {
-    border-top: 1px solid #E2E8F0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 6.5px;
-    font-weight: 500;
+    font-size: 6.2px;
+    font-weight: 600;
     color: #64748B;
     background: #FFFFFF;
-    border-radius: 8px;
-    padding: 6px 12px;
+    border-radius: 7px;
+    padding: 5px 12px;
     border: 1px solid #E2E8F0;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
-    margin-top: 6px;
+    margin-top: 4px;
   }
   .footer strong {
     color: #0F172A;
-    font-weight: 600;
   }
 </style>
 </head>
@@ -371,351 +436,368 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1>TravelOS — Corporate Travel Management System</h1>
-    <p>End-to-End System Flow, Technical Wireframes & Architecture Blueprint</p>
+    <div class="hdr-left">
+      <div class="logo-box">TO</div>
+      <div>
+        <h1>TravelOS — Corporate Travel Management</h1>
+        <p>End-to-End System Flow, Technical Wireframes & Architecture Blueprint</p>
+      </div>
+    </div>
+    <div class="pills">
+      <span class="pl pl-indigo">ANGULAR 16+</span>
+      <span class="pl pl-emerald">SPRING BOOT 3.2</span>
+      <span class="pl pl-amber">JWT + RBAC</span>
+      <span class="pl pl-purple">H2 + JPA</span>
+    </div>
   </div>
 
   <!-- STAKEHOLDERS -->
   <div>
-    <div class="section-title">Stakeholders</div>
-    <div class="stakeholders-grid">
-      <div class="stakeholder-node">
-        <div class="stakeholder-icon">1</div>
-        <div class="stakeholder-name">Traveling Employee</div>
-        <div class="stakeholder-sub">Raise · Track · Upload · Close</div>
+    <div class="sec-label">Stakeholders</div>
+    <div class="stakeholders-strip">
+      <div class="sh-item">
+        <div class="sh-avatar" style="background:#4F46E5;">1</div>
+        <div class="sh-name">Traveling Employee</div>
+        <div class="sh-sub">Raise · Track · Upload · Close</div>
       </div>
-      <div class="stakeholder-node">
-        <div class="stakeholder-icon">2</div>
-        <div class="stakeholder-name">Approving Manager</div>
-        <div class="stakeholder-sub">Review · Remark · Decision</div>
+      <div class="sh-item">
+        <div class="sh-avatar" style="background:#7C3AED;">2</div>
+        <div class="sh-name">Approving Manager</div>
+        <div class="sh-sub">Review · Remark · Decision</div>
       </div>
-      <div class="stakeholder-node">
-        <div class="stakeholder-icon">3</div>
-        <div class="stakeholder-name">Travel Team (Desk)</div>
-        <div class="stakeholder-sub">Bookings · Timeline · Assets</div>
+      <div class="sh-item">
+        <div class="sh-avatar" style="background:#0891B2;">3</div>
+        <div class="sh-name">Travel Desk Team</div>
+        <div class="sh-sub">Bookings · Timeline · Assets</div>
       </div>
-      <div class="stakeholder-node">
-        <div class="stakeholder-icon">4</div>
-        <div class="stakeholder-name">Financial Team</div>
-        <div class="stakeholder-sub">Audit Claims · Credit Sal</div>
+      <div class="sh-item">
+        <div class="sh-avatar" style="background:#D97706;">4</div>
+        <div class="sh-name">Financial Team</div>
+        <div class="sh-sub">Audit Claims · Credit Sal</div>
       </div>
-      <div class="stakeholder-node">
-        <div class="stakeholder-icon">5</div>
-        <div class="stakeholder-name">Risk & Admin</div>
-        <div class="stakeholder-sub">Policy · SOS · Governance</div>
+      <div class="sh-item">
+        <div class="sh-avatar" style="background:#475569;">5</div>
+        <div class="sh-name">Risk & Admin</div>
+        <div class="sh-sub">Policy · SOS · Governance</div>
       </div>
     </div>
   </div>
 
-  <div class="section-title">System Flow (End-to-End Lifecycle)</div>
+  <div class="sec-label">System Flow (End-to-End Lifecycle)</div>
 
   <!-- MAIN SYSTEM FLOW -->
-  <div class="flow-container">
+  <div class="flow-wrap">
 
     <!-- ROW 1: Phase 1 & Phase 2 -->
-    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; flex: 1.1;">
+    <div style="display: grid; grid-template-columns: 1fr 1.1fr; gap: 7px;">
       <!-- Phase 1 -->
       <div class="card tint-indigo">
-        <div class="card-top">
-          <span class="card-title">Phase 1: Landing & Login Screen</span>
-          <span class="badge badge-indigo">Auth Module</span>
+        <div class="card-head">
+          <span class="card-title">Phase 1: Landing & Login</span>
+          <span class="card-badge bg-indigo">Auth Module</span>
         </div>
-        <div style="display: flex; gap: 8px; margin-top: 2px; flex: 1; align-items: center;">
+        <div class="row-flex">
           <div style="flex: 1.15;">
-            <div class="ui-label">[Emp Dash Login Screen]</div>
-            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:5px 6px;">
-              <div style="display:flex; flex-direction:column; gap: 2.5px;">
-                <div class="input-box"><span style="color:#94A3B8; margin-right:4px;">ID:</span> EMP001 / EMP002</div>
-                <div class="input-box"><span style="color:#94A3B8; margin-right:4px;">PW:</span> ••••••••••••</div>
-                <div class="btn-primary" style="margin-top: 1px; font-size:6.2px;">Log In → JWT Bearer</div>
-              </div>
+            <div class="wf-window">
+              <div class="wf-input"><span style="color:#94A3B8; margin-right:3px;">ID:</span> EMP001 / EMP002</div>
+              <div class="wf-input"><span style="color:#94A3B8; margin-right:3px;">PW:</span> ••••••••••••</div>
+              <div class="btn-sm btn-dark" style="width:100%;">Log In → JWT Bearer</div>
             </div>
           </div>
-          <div style="flex: 0.95; border-left: 1px dashed #CBD5E1; padding-left: 8px;">
-            <div class="ui-label">[Elevated Role Cards]</div>
-            <ul class="list-clean" style="font-size: 6.2px;">
-              <li><strong>Manager:</strong> Passcode <code>111111</code></li>
-              <li><strong>Travel Desk:</strong> Passcode <code>222222</code></li>
-              <li><strong>Finance:</strong> Passcode <code>333333</code></li>
-              <li><strong>Admin:</strong> Passcode <code>444444</code></li>
+          <div style="flex: 0.9; border-left: 1px dashed #CBD5E1; padding-left: 6px;">
+            <div style="font-size:6.2px; font-weight:800; color:#334155; margin-bottom:2px;">Role Passcodes</div>
+            <ul class="compact-list" style="font-size:6px;">
+              <li><strong>Manager:</strong> <code>111111</code></li>
+              <li><strong>Travel Desk:</strong> <code>222222</code></li>
+              <li><strong>Finance:</strong> <code>333333</code></li>
+              <li><strong>Admin:</strong> <code>444444</code></li>
             </ul>
-            <div style="font-size:5.5px; color:#64748B; margin-top:3px; line-height:1.2;">
-              * Instant role routing without ID input.
-            </div>
           </div>
         </div>
       </div>
 
       <!-- Phase 2 -->
       <div class="card">
-        <div class="card-top">
+        <div class="card-head">
           <span class="card-title">Phase 2: Employee Dashboard</span>
-          <span class="badge badge-slate">Employee View</span>
+          <span class="card-badge bg-slate">Employee Hub</span>
         </div>
-        <div style="display: flex; gap: 8px; margin-top: 2px; flex: 1; align-items: center;">
-          <div style="width: 36%; border-right: 1px solid #E2E8F0; padding-right: 6px;">
-            <div class="ui-label">[Profile Summary]</div>
-            <ul class="list-clean" style="font-size: 6.2px;">
-              <li><strong>Name:</strong> Arjun Sharma</li>
-              <li><strong>DOJ / Dept:</strong> Active (Engg)</li>
+        <div class="row-flex">
+          <div style="width: 34%; border-right: 1px solid #E2E8F0; padding-right: 5px;">
+            <div style="font-size:6.2px; font-weight:800; color:#334155; margin-bottom:1px;">Profile Info</div>
+            <ul class="compact-list" style="font-size:6px;">
+              <li><strong>Name:</strong> Arjun S.</li>
+              <li><strong>Dept:</strong> Engg</li>
               <li><strong>Govt ID:</strong> Verified</li>
-              <li><strong>Docs:</strong> Attached</li>
             </ul>
           </div>
           <div style="flex: 1;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-              <span class="ui-label">[Trip Registry]</span>
-              <span class="btn-primary" style="font-size: 5.8px; padding: 2px 5px;">+ Raise Travel Request</span>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:6.2px; font-weight:800; color:#334155;">Trip Registry</span>
+              <span class="btn-sm btn-dark" style="font-size:5.5px; padding:1.5px 4.5px;">+ Raise Request</span>
             </div>
-            <table class="clean-table">
+            <table class="mini-table">
               <tr>
-                <th>Active Trips</th>
-                <th>Closed Trips</th>
+                <th>Active</th>
+                <th>Closed</th>
                 <th>Upcoming</th>
               </tr>
               <tr>
-                <td style="color:#059669; font-weight:700;">TRIP-1024 (Live)</td>
-                <td>TRIP-0982 (Done)</td>
-                <td>TRIP-1055 (Pending)</td>
+                <td style="color:#059669; font-weight:700;">TRIP-1024</td>
+                <td>TRIP-0982</td>
+                <td>TRIP-1055</td>
               </tr>
             </table>
-            <div style="font-size: 5.5px; color:#64748B; margin-top: 3px; line-height: 1.2;">
-              Access live tracking, voucher downloads & closure triggers.
-            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- CONNECTOR 1 -> 2 -->
-    <div class="connector-wrap">
-      <svg class="connector-svg" viewBox="0 0 400 9" preserveAspectRatio="none">
-        <line x1="80" y1="0" x2="80" y2="4.5" stroke="#94A3B8" stroke-width="1.2"/>
-        <line x1="80" y1="4.5" x2="200" y2="4.5" stroke="#94A3B8" stroke-width="1.2"/>
-        <line x1="200" y1="4.5" x2="200" y2="9" stroke="#94A3B8" stroke-width="1.2"/>
-        <polygon points="197,5.5 200,9 203,5.5" fill="#94A3B8"/>
+    <div class="conn-bar">
+      <svg class="conn-svg" viewBox="0 0 400 6" preserveAspectRatio="none">
+        <line x1="80" y1="0" x2="80" y2="3" stroke="#94A3B8" stroke-width="1.2"/>
+        <line x1="80" y1="3" x2="200" y2="3" stroke="#94A3B8" stroke-width="1.2"/>
+        <line x1="200" y1="3" x2="200" y2="6" stroke="#94A3B8" stroke-width="1.2"/>
+        <polygon points="198,4 200,6 202,4" fill="#94A3B8"/>
       </svg>
     </div>
 
     <!-- ROW 2: Phase 3 -> Phase 4 -> Phase 5 -->
-    <div style="display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 8px; flex: 1.25;">
+    <div style="display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 7px;">
       <!-- Phase 3 -->
       <div class="card">
-        <div class="card-top">
-          <span class="card-title">Phase 3: Create & Submit Request</span>
-          <span class="badge badge-slate">Form Input</span>
+        <div class="card-head">
+          <span class="card-title">Phase 3: Create Request</span>
+          <span class="card-badge bg-slate">Form</span>
         </div>
-        <div>
-          <div class="ui-label">[Raise Travel Request Form]</div>
-          <ul class="list-clean">
-            <li><strong>Project & Client:</strong> Project #8492 · Client #C-901</li>
-            <li><strong>Dest & Duration:</strong> Mumbai → London (7 Days)</li>
-            <li><strong>Needs:</strong> ☑ Flight ☑ Hotel ☑ Cab ☑ Extra Luggage</li>
-            <li><strong>Asset Allocation:</strong> ThinkPad X1 + Testing Device</li>
-            <li><strong>Estimated Cost:</strong> Total Budget: $3,450</li>
-          </ul>
+        <ul class="compact-list">
+          <li><strong>Project & Client:</strong> #8492 · Client #C-901</li>
+          <li><strong>Route:</strong> Mumbai → London (7 Days)</li>
+          <li><strong>Hardware Assets:</strong> ThinkPad X1 + Token</li>
+        </ul>
+        <div class="chips-wrap">
+          <span class="chip">✈ Flight</span>
+          <span class="chip">🏨 Hotel</span>
+          <span class="chip">🚖 Cab</span>
+          <span class="chip">🧳 Luggage</span>
         </div>
-        <div style="text-align: right; margin-top: 3px;">
-          <span class="btn-primary" style="font-size: 6px;">[Submit Request] → PENDING_AUTO_VAL</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+          <span style="font-size:6px; font-weight:700; color:#475569;">Est: $3,450</span>
+          <span class="btn-sm btn-dark" style="font-size:5.8px;">Submit → PENDING</span>
         </div>
       </div>
 
       <!-- Phase 4 -->
-      <div class="card tint-amber" style="background:#FFFDF7;">
-        <div>
-          <div class="card-top" style="border-color: #FEF3C7;">
-            <span class="card-title" style="color:#92400E;">Phase 4: Automatic Validation</span>
-            <span class="badge badge-amber">5-Check Engine</span>
-          </div>
-          <div class="ui-label" style="color:#92400E; text-align:center;">[AUTOMATIC VALIDATION]</div>
-          <div class="rule-grid">
-            <div class="rule-item">Is Emp Active?</div>
-            <div class="rule-item">Does Project Exist?</div>
-            <div class="rule-item">Is Valid Client?</div>
-            <div class="rule-item">Budget Available?</div>
-          </div>
-          <div class="rule-item" style="margin-top: 3px;">Mandatory Details & Company Policy OK?</div>
+      <div class="card tint-amber" style="background:#FFFDF9;">
+        <div class="card-head" style="border-color:#FEF3C7;">
+          <span class="card-title" style="color:#92400E;">Phase 4: Auto-Validation</span>
+          <span class="card-badge bg-amber">5 Checks</span>
         </div>
-        <div style="margin-top: 4px; display:flex; justify-content:space-between; border-top: 1px dashed #FDE68A; padding-top: 3px;">
-          <span style="font-size: 6px; font-weight:700; color:#059669;">✓ Yes → PENDING_MGR</span>
-          <span style="font-size: 6px; font-weight:700; color:#DC2626;">✗ No → REJECTED_SYS</span>
+        <div class="rule-grid-2x2">
+          <div class="rule-tag">Emp Active</div>
+          <div class="rule-tag">Project OK</div>
+          <div class="rule-tag">Client Valid</div>
+          <div class="rule-tag">Budget OK</div>
+        </div>
+        <div class="rule-tag" style="margin-top:1.5px;">Company Policy Passed</div>
+        <div style="display:flex; justify-content:space-between; border-top:1px dashed #FDE68A; padding-top:3px; margin-top:2px;">
+          <span style="font-size:6px; font-weight:800; color:#059669;">✓ PASS → MGR</span>
+          <span style="font-size:6px; font-weight:800; color:#DC2626;">✗ FAIL → REJECT</span>
         </div>
       </div>
 
       <!-- Phase 5 -->
       <div class="card">
-        <div class="card-top">
+        <div class="card-head">
           <span class="card-title">Phase 5: Manager Review</span>
-          <span class="badge badge-slate">Manager</span>
+          <span class="card-badge bg-slate">Manager</span>
         </div>
-        <div>
-          <div class="ui-label">[Manager Dashboard Queue]</div>
-          <div style="display:flex; gap:5px; font-size:5.8px; background:#F8FAFC; padding:2.5px 5px; border:1px solid #E2E8F0; border-radius:5px; margin-bottom:3px;">
-            <span>Pending: <strong>3</strong></span> | <span>Approved: <strong>14</strong></span> | <span>Rejected: <strong>1</strong></span>
-          </div>
-          <ul class="list-clean">
-            <li><strong>Audit Review:</strong> Business purpose & budget fit</li>
-            <li><strong>Asset Check:</strong> Verify hardware allocation</li>
-            <li><strong>Remarks:</strong> Mandatory feedback input</li>
-          </ul>
+        <div style="display:flex; justify-content:space-between; font-size:5.8px; background:#F8FAFC; padding:2px 4px; border-radius:3px; border:0.6px solid #E2E8F0;">
+          <span>Pending: <strong>3</strong></span> | <span>Approved: <strong>14</strong></span> | <span>Rejected: <strong>1</strong></span>
         </div>
-        <div>
-          <div style="margin-top: 3px; display: flex; gap: 4px;">
-            <span class="btn-success" style="flex:1;">[APPROVE]</span>
-            <span class="btn-danger" style="flex:1;">[REJECT]</span>
-          </div>
-          <div style="font-size: 5.5px; color:#64748B; text-align:center; margin-top: 2px;">
-            Status updates to <strong>APPROVED</strong> on sign-off.
-          </div>
+        <ul class="compact-list">
+          <li><strong>Audit:</strong> Purpose & budget fit confirmed</li>
+          <li><strong>Assets:</strong> Hardware allocation signed off</li>
+        </ul>
+        <div style="display:flex; gap:3px; margin-top:1px;">
+          <span class="btn-sm btn-green" style="flex:1;">[APPROVE]</span>
+          <span class="btn-sm btn-red" style="flex:1;">[REJECT]</span>
         </div>
       </div>
     </div>
 
     <!-- CONNECTOR 2 -> 3 -->
-    <div class="connector-wrap">
-      <svg class="connector-svg" viewBox="0 0 400 9" preserveAspectRatio="none">
-        <line x1="330" y1="0" x2="330" y2="4.5" stroke="#94A3B8" stroke-width="1.2"/>
-        <line x1="330" y1="4.5" x2="100" y2="4.5" stroke="#94A3B8" stroke-width="1.2"/>
-        <line x1="100" y1="4.5" x2="100" y2="9" stroke="#94A3B8" stroke-width="1.2"/>
-        <polygon points="97,5.5 100,9 103,5.5" fill="#94A3B8"/>
+    <div class="conn-bar">
+      <svg class="conn-svg" viewBox="0 0 400 6" preserveAspectRatio="none">
+        <line x1="330" y1="0" x2="330" y2="3" stroke="#94A3B8" stroke-width="1.2"/>
+        <line x1="330" y1="3" x2="100" y2="3" stroke="#94A3B8" stroke-width="1.2"/>
+        <line x1="100" y1="3" x2="100" y2="6" stroke="#94A3B8" stroke-width="1.2"/>
+        <polygon points="98,4 100,6 102,4" fill="#94A3B8"/>
       </svg>
     </div>
 
-    <!-- ROW 3: Phase 6 & Phase 7 -->
-    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; flex: 1.25;">
+    <!-- ROW 3: Travel Desk (Phase 6) & Active Trip Live Tracking (Phase 7) -->
+    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 7px;">
       <!-- Phase 6 -->
       <div class="card tint-purple">
-        <div class="card-top">
+        <div class="card-head">
           <span class="card-title" style="color:#6B21A8;">Phase 6: Travel Desk & Booking</span>
-          <span class="badge badge-purple">Travel Desk</span>
+          <span class="card-badge bg-purple">Bookings</span>
         </div>
-        <div>
-          <div class="ui-label">[Travel Team (Travel Desk) Execution]</div>
-          <ul class="list-clean">
-            <li><strong>Flight Booking:</strong> PNR: AI-204 · Dep: 08:00 AM · Arr: 11:00 AM</li>
-            <li><strong>Cab Assignment:</strong> Cab: DL-01-AB-1234 (Ramesh Kumar)</li>
-            <li><strong>Hotel Reservation:</strong> Grand Hyatt (Booking ID: HBK-90234)</li>
-            <li><strong>Asset Handover:</strong> HW-Asset-8492 logged & dispatched</li>
-            <li><strong>Checklist Timeline:</strong> Pre-fills & schedules all 7 milestone times</li>
-          </ul>
-        </div>
-        <div style="text-align: right; margin-top: 3px;">
-          <span class="btn-primary" style="background:#7E22CE; font-size: 6px;">Activate Itinerary → Status: [ACTIVE]</span>
+        <ul class="compact-list">
+          <li><strong>Flight:</strong> PNR AI-204 (08:00 AM → 11:00 AM)</li>
+          <li><strong>Cab:</strong> DL-01-AB-1234 (Ramesh Kumar)</li>
+          <li><strong>Hotel:</strong> Grand Hyatt (Booking #HBK-90234)</li>
+          <li><strong>Assets:</strong> HW-Asset-8492 dispatched</li>
+        </ul>
+        <div style="text-align: right; margin-top: 1px;">
+          <span class="btn-sm btn-purple" style="font-size:5.8px;">Activate Itinerary → ACTIVE</span>
         </div>
       </div>
 
       <!-- Phase 7 -->
       <div class="card tint-emerald">
-        <div class="card-top">
-          <span class="card-title" style="color:#065F46;">Phase 7: Active Trip & Live Tracking</span>
-          <span class="badge badge-emerald">Live Verification</span>
+        <div class="card-head">
+          <span class="card-title" style="color:#065F46;">Phase 7: Live Tracking & Proof</span>
+          <span class="card-badge bg-emerald">7 Milestones</span>
         </div>
-        <div>
-          <div class="ui-label" style="color:#065F46;">[7-Milestone Timeline with Mandatory Verification]</div>
-          <div class="milestones-row">
-            <div class="ms-col">
-              <div class="ms-circle done">1</div>
-              <div class="ms-lbl">Flight Board</div>
-              <div class="ms-tag">🔒 Seat No</div>
-            </div>
-            <div class="ms-col">
-              <div class="ms-circle done">2</div>
-              <div class="ms-lbl">Flight Land</div>
-              <div class="ms-tag">🔒 Terminal</div>
-            </div>
-            <div class="ms-col">
-              <div class="ms-circle done">3</div>
-              <div class="ms-lbl">Cab Pickup</div>
-              <div class="ms-tag">🔒 OTP/Code</div>
-            </div>
-            <div class="ms-col">
-              <div class="ms-circle done">4</div>
-              <div class="ms-lbl">Hotel In</div>
-              <div class="ms-tag">🔒 Book ID</div>
-            </div>
-            <div class="ms-col">
-              <div class="ms-circle">5</div>
-              <div class="ms-lbl">Hotel Out</div>
-              <div class="ms-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
-            </div>
-            <div class="ms-col">
-              <div class="ms-circle">6</div>
-              <div class="ms-lbl">Return Flt</div>
-              <div class="ms-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
-            </div>
-            <div class="ms-col">
-              <div class="ms-circle">7</div>
-              <div class="ms-lbl">Journey End</div>
-              <div class="ms-tag" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
-            </div>
+        <div class="milestone-strip">
+          <div class="ms-box">
+            <div class="ms-num done">1</div>
+            <div class="ms-txt">Flight Board</div>
+            <div class="ms-proof">🔒 Seat 14A</div>
+          </div>
+          <div class="ms-box">
+            <div class="ms-num done">2</div>
+            <div class="ms-txt">Flight Land</div>
+            <div class="ms-proof">🔒 Term 2</div>
+          </div>
+          <div class="ms-box">
+            <div class="ms-num done">3</div>
+            <div class="ms-txt">Cab Pickup</div>
+            <div class="ms-proof">🔒 OTP 4829</div>
+          </div>
+          <div class="ms-box">
+            <div class="ms-num done">4</div>
+            <div class="ms-txt">Hotel In</div>
+            <div class="ms-proof">🔒 HBK-902</div>
+          </div>
+          <div class="ms-box">
+            <div class="ms-num">5</div>
+            <div class="ms-txt">Hotel Out</div>
+            <div class="ms-proof" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
+          </div>
+          <div class="ms-box">
+            <div class="ms-num">6</div>
+            <div class="ms-txt">Return Flt</div>
+            <div class="ms-proof" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
+          </div>
+          <div class="ms-box">
+            <div class="ms-num">7</div>
+            <div class="ms-txt">Journey End</div>
+            <div class="ms-proof" style="background:#F1F5F9; color:#64748B; border-color:#CBD5E1;">Pending</div>
           </div>
         </div>
-        <div style="font-size: 5.8px; color:#065F46; margin-top: 3px; font-weight:600;">
-          * Milestone accuracy: On-Time / Delayed / Early tracked vs Travel Desk schedule.
+        <div style="font-size:5.5px; color:#065F46; margin-top:2px; font-weight:700;">
+          * Mandatory Proof Verification enforces live milestone progression.
         </div>
       </div>
     </div>
 
     <!-- CONNECTOR 3 -> 4 -->
-    <div class="connector-wrap">
-      <svg class="connector-svg" viewBox="0 0 400 9" preserveAspectRatio="none">
-        <line x1="200" y1="0" x2="200" y2="9" stroke="#94A3B8" stroke-width="1.2"/>
-        <polygon points="197,5.5 200,9 203,5.5" fill="#94A3B8"/>
+    <div class="conn-bar">
+      <svg class="conn-svg" viewBox="0 0 400 6" preserveAspectRatio="none">
+        <line x1="200" y1="0" x2="200" y2="6" stroke="#94A3B8" stroke-width="1.2"/>
+        <polygon points="198,4 200,6 202,4" fill="#94A3B8"/>
       </svg>
     </div>
 
-    <!-- ROW 4: Phase 8 & Phase 9 -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1.15;">
+    <!-- ROW 4: Financial Settlement (Phase 8) & Trip Closure (Phase 9) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
       <!-- Phase 8 -->
       <div class="card tint-amber">
-        <div class="card-top">
-          <span class="card-title" style="color:#92400E;">Phase 8: Financial Expense Settlement</span>
-          <span class="badge badge-amber">Finance (Accounts)</span>
+        <div class="card-head">
+          <span class="card-title" style="color:#92400E;">Phase 8: Financial Settlement</span>
+          <span class="card-badge bg-amber">Finance</span>
         </div>
-        <div>
-          <div class="ui-label">[Financial Team (Accounts) Review]</div>
-          <ul class="list-clean">
-            <li><strong>Upload Bills:</strong> Employee uploads receipts (Meals, Cabs, Emergency).</li>
-            <li><strong>Audit & Verification:</strong> Accounts team reviews claim categories & bills.</li>
-            <li><strong>Salary Reimbursement:</strong> Approved amount is <strong>CREDITED</strong> to employee salary.</li>
-          </ul>
-        </div>
-        <div style="font-size: 5.8px; color:#B45309; font-weight:700; margin-top: 3px;">
-          * Approved expenses transition to status 'CREDITED' prior to trip closure.
+        <ul class="compact-list">
+          <li><strong>Upload Bills:</strong> Receipts for Meals, Local Cab, Emergency</li>
+          <li><strong>Audit:</strong> Accounts reviews claim validity & receipts</li>
+          <li><strong>Reimbursement:</strong> Approved amount <strong>CREDITED</strong> to salary</li>
+        </ul>
+        <div style="font-size:5.5px; color:#B45309; font-weight:700; margin-top:1px;">
+          * Requires 'CREDITED' state before trip closure eligibility.
         </div>
       </div>
 
       <!-- Phase 9 -->
       <div class="card">
-        <div class="card-top">
-          <span class="card-title">Phase 9: Trip Closure & Reconciliation</span>
-          <span class="badge badge-slate">4-Condition Gate</span>
+        <div class="card-head">
+          <span class="card-title">Phase 9: Trip Closure & Audit</span>
+          <span class="card-badge bg-slate">4 Gates</span>
         </div>
-        <div>
-          <div class="ui-label">[Close Trip Automated Verification]</div>
-          <ul class="list-clean">
-            <li><strong>① Trip Journey Ended:</strong> Milestone 7 verified with arrival proof.</li>
-            <li><strong>② Assets Returned:</strong> Physical hardware logged as returned.</li>
-            <li><strong>③ Expenses Settled:</strong> All expense claims in <code>CREDITED</code> state.</li>
-            <li><strong>④ Dates & Policy:</strong> Current date is past scheduled end date.</li>
-          </ul>
-        </div>
-        <div style="margin-top: 3px; display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size: 6px; font-weight:700; color:#64748B;">All 4 Verified → Finalize</span>
-          <span class="btn-primary" style="font-size: 6px;">[CLOSE TRIP] → Status: CLOSED</span>
+        <ul class="compact-list">
+          <li><strong>① Journey Ended:</strong> Milestone 7 verified with proof</li>
+          <li><strong>② Assets Returned:</strong> Hardware logged back in inventory</li>
+          <li><strong>③ Expenses Settled:</strong> All claims in <code>CREDITED</code> state</li>
+          <li><strong>④ End Date Passed:</strong> Current date exceeds trip return date</li>
+        </ul>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+          <span style="font-size:6px; font-weight:700; color:#64748B;">4/4 Gates Verified</span>
+          <span class="btn-sm btn-dark" style="font-size:5.8px;">[CLOSE TRIP] → CLOSED</span>
         </div>
       </div>
     </div>
 
   </div>
 
+  <!-- CREATIVE SPECS & ARCHITECTURE MATRIX -->
+  <div class="creative-specs-strip">
+    <!-- REST API Endpoints -->
+    <div class="spec-card">
+      <div class="spec-title">Key REST Endpoints (24 APIs)</div>
+      <div class="chip-grid">
+        <span class="mini-chip">POST /api/trips</span>
+        <span class="mini-chip">PUT /trips/{id}/approve</span>
+        <span class="mini-chip">POST /itinerary/{id}/timeline</span>
+        <span class="mini-chip">PATCH /trips/{id}/milestone</span>
+        <span class="mini-chip">PUT /expenses/{id}/credit</span>
+        <span class="mini-chip">POST /trips/{id}/close</span>
+      </div>
+    </div>
+
+    <!-- Database Schema Entities -->
+    <div class="spec-card">
+      <div class="spec-title">Database Entities (8 Tables)</div>
+      <div class="chip-grid">
+        <span class="mini-chip">User</span>
+        <span class="mini-chip">TripRequest</span>
+        <span class="mini-chip">TripItinerary</span>
+        <span class="mini-chip">TripMilestones</span>
+        <span class="mini-chip">ChecklistTimeline</span>
+        <span class="mini-chip">Expense</span>
+      </div>
+    </div>
+
+    <!-- Security & Architecture Model -->
+    <div class="spec-card">
+      <div class="spec-title">Security & Integrity</div>
+      <div class="chip-grid">
+        <span class="mini-chip">JWT 24h Bearer</span>
+        <span class="mini-chip">Role-Based Guard</span>
+        <span class="mini-chip">H2 File Persistence</span>
+        <span class="mini-chip">Proof Verification</span>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <div class="footer">
-    <div><strong>Frontend:</strong> Angular 16+ · Glassmorphism · RxJS</div>
+    <div><strong>Frontend:</strong> Angular 16+ · Glassmorphism · RxJS Reactive Store</div>
     <div><strong>Backend:</strong> Spring Boot 3.2 · Java 17+ · Spring Security</div>
-    <div><strong>Security:</strong> JWT Bearer · Role Guards</div>
-    <div><strong>Database:</strong> H2 File-based · Hibernate JPA</div>
-    <div><strong>Specs:</strong> 24 Endpoints · 8 Entities</div>
+    <div><strong>Database:</strong> H2 File-based DB · Hibernate JPA</div>
+    <div><strong>Specs:</strong> 24 REST Endpoints · 8 Entities · 7 Milestones</div>
   </div>
 
 </body>
