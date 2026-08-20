@@ -24,24 +24,30 @@ cd frontend && npm install && ng serve
 
 ## 🏛️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Angular 16+ SPA                       │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐  │
-│  │ Employee  │ │ Manager  │ │Travel Dsk│ │  Finance  │  │
-│  │Dashboard  │ │Dashboard │ │Dashboard │ │ Dashboard │  │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └─────┬─────┘  │
-│       └─────────────┴────────────┴─────────────┘        │
-│                    HTTP + JWT Bearer                     │
-├─────────────────────────────────────────────────────────┤
-│               Spring Boot 3.2 REST API                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐  │
-│  │   Auth   │ │  Trips   │ │Itinerary │ │ Expenses  │  │
-│  │ Service  │ │ Service  │ │+ Timeline│ │  Service  │  │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └─────┬─────┘  │
-│       └─────────────┴────────────┴─────────────┘        │
-│              JPA / Hibernate + H2 (File)                │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Frontend["🅰️ Angular 16+ SPA"]
+        E["👤 Employee<br/>Dashboard"]
+        MG["📋 Manager<br/>Dashboard"]
+        TD["✈️ Travel Desk<br/>Dashboard"]
+        F["💰 Finance<br/>Dashboard"]
+        AD["⚙️ Admin<br/>Dashboard"]
+    end
+
+    subgraph API["☕ Spring Boot 3.2 REST API"]
+        AS["Auth<br/>Service"]
+        TS["Trip Request<br/>Service"]
+        IS["Itinerary<br/>+ Timeline"]
+        LT["Live Tracking<br/>+ Verification"]
+        ES["Expense<br/>Service"]
+    end
+
+    subgraph DB["💾 Persistence"]
+        H2["H2 File DB<br/>JPA / Hibernate"]
+    end
+
+    Frontend -->|"HTTP + JWT Bearer"| API
+    API --> DB
 ```
 
 ---
@@ -76,16 +82,26 @@ Apple HIG-inspired glassmorphism with:
 
 ## 🔄 Business Workflow — 7 Steps
 
-```
-  ① Employee        ② System           ③ Manager         ④ Travel Desk
-  Raises Request  → Auto-Validates   → Approves       → Books Itinerary
-  PENDING_AUTO_VAL  PENDING_MANAGER     APPROVED          + Sets Timeline
-                    or REJECTED_SYSTEM  or REJECTED       ACTIVE
+```mermaid
+flowchart LR
+    A["① Employee<br/>Raises Request"] -->|PENDING_AUTO_VAL| B["② System<br/>Auto-Validates"]
+    B -->|Pass| C["③ Manager<br/>Reviews"]
+    B -->|Fail| X1["❌ REJECTED_SYSTEM"]
+    C -->|Approve| D["④ Travel Desk<br/>Books Itinerary<br/>+ Sets Timeline"]
+    C -->|Reject| X2["❌ REJECTED"]
+    D -->|ACTIVE| E["⑤ Employee<br/>Live Tracks<br/>with Verification"]
+    E --> F["⑥ Finance<br/>Credits Expenses"]
+    F --> G["⑦ Employee<br/>Closes Trip ✅"]
 
-  ⑤ Employee        ⑥ Finance          ⑦ Employee
-  Live Tracks     → Credits          → Closes Trip
-  with Verification  Expenses          CLOSED
-  ACTIVE             ACTIVE
+    style A fill:#0071E3,color:#fff
+    style B fill:#FF9F0A,color:#fff
+    style C fill:#5856D6,color:#fff
+    style D fill:#30D158,color:#fff
+    style E fill:#0071E3,color:#fff
+    style F fill:#FF9F0A,color:#fff
+    style G fill:#30D158,color:#fff
+    style X1 fill:#FF3B30,color:#fff
+    style X2 fill:#FF3B30,color:#fff
 ```
 
 ### Step 1 — Raise Request *(Employee)*
