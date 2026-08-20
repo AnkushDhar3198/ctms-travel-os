@@ -4,7 +4,8 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   TripRequest, TripMilestone, MilestoneUpdate,
-  Itinerary, Expense, UserProfile, ApprovalRequest, TripClosureCheck
+  Itinerary, Expense, UserProfile, ApprovalRequest, TripClosureCheck,
+  ChecklistTimeline
 } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
@@ -82,6 +83,14 @@ export class TripService {
 
   markAssetsReturned(tripId: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/itinerary/${tripId}/assets-returned`, {});
+  }
+
+  saveChecklistTimeline(tripId: number, timeline: ChecklistTimeline): Observable<ChecklistTimeline> {
+    return this.http.post<ChecklistTimeline>(`${this.apiUrl}/itinerary/${tripId}/timeline`, timeline);
+  }
+
+  getChecklistTimeline(tripId: number): Observable<ChecklistTimeline> {
+    return this.http.get<ChecklistTimeline>(`${this.apiUrl}/itinerary/${tripId}/timeline`);
   }
 
   // ==================== Trip Closure ====================

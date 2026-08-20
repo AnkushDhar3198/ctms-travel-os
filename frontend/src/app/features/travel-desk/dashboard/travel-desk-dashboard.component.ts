@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
-import { TripRequest, Itinerary } from '../../../core/models/models';
+import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/models';
 
 @Component({
   selector: 'app-travel-desk-dashboard',
@@ -63,14 +63,23 @@ import { TripRequest, Itinerary } from '../../../core/models/models';
       </main>
     </div>
 
-    <!-- Itinerary Modal -->
+    <!-- Itinerary Modal (with Timeline Section) -->
     <div class="modal-overlay" [class.active]="showItineraryModal" (click)="showItineraryModal = false">
-      <div class="modal-container" style="max-width:560px" (click)="$event.stopPropagation()">
+      <div class="modal-container itinerary-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3 class="modal-title">Build Itinerary</h3>
+          <h3 class="modal-title">Build Itinerary & Timeline</h3>
           <button class="modal-close" (click)="showItineraryModal = false">✕</button>
         </div>
-        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+          <!-- Trip Info Summary -->
+          <div class="trip-summary-bar" *ngIf="selectedTrip">
+            <span>🧑‍💼 {{ selectedTrip.employeeName }}</span>
+            <span>📍 {{ selectedTrip.destination }}</span>
+            <span>📅 {{ selectedTrip.startDate }} → {{ selectedTrip.endDate }}</span>
+          </div>
+
+          <!-- Itinerary Section -->
+          <div class="section-label">✈️ Booking Details</div>
           <div class="form-group"><label class="form-label">PNR / Ticket No</label><input class="form-input" [(ngModel)]="itinerary.pnr" placeholder="ABC123" /></div>
           <div class="form-group"><label class="form-label">Flight Details</label><input class="form-input" [(ngModel)]="itinerary.flightDetails" placeholder="AI-302, DEL→BLR, 14:30" /></div>
           <div class="form-group"><label class="form-label">Cab Driver Name</label><input class="form-input" [(ngModel)]="itinerary.cabDriverName" /></div>
@@ -78,6 +87,42 @@ import { TripRequest, Itinerary } from '../../../core/models/models';
           <div class="form-group"><label class="form-label">Hotel Name</label><input class="form-input" [(ngModel)]="itinerary.hotelName" /></div>
           <div class="form-group"><label class="form-label">Hotel Address</label><input class="form-input" [(ngModel)]="itinerary.hotelAddress" /></div>
           <div class="form-group"><label class="form-label">Allocated Assets</label><input class="form-input" [(ngModel)]="itinerary.allocatedAssets" placeholder="Laptop, WiFi Dongle" /></div>
+
+          <!-- Timeline Section -->
+          <div class="section-divider"></div>
+          <div class="section-label">🕐 Checklist Timeline</div>
+          <p class="section-hint">Set expected date & time for each milestone based on the employee's travel plan.</p>
+
+          <div class="timeline-inputs">
+            <div class="form-group">
+              <label class="form-label">✈️ Flight Boarding</label>
+              <input class="form-input" type="datetime-local" [(ngModel)]="timeline.flightBoardingTime" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">🛬 Flight Landing</label>
+              <input class="form-input" type="datetime-local" [(ngModel)]="timeline.flightLandingTime" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">🚕 Cab Pickup</label>
+              <input class="form-input" type="datetime-local" [(ngModel)]="timeline.cabPickupTime" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">🏨 Hotel Check-In</label>
+              <input class="form-input" type="datetime-local" [(ngModel)]="timeline.hotelCheckinTime" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">🧳 Hotel Check-Out</label>
+              <input class="form-input" type="datetime-local" [(ngModel)]="timeline.hotelCheckoutTime" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">🛫 Return Flight</label>
+              <input class="form-input" type="datetime-local" [(ngModel)]="timeline.returnFlightTime" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">🏠 Journey End</label>
+              <input class="form-input" type="datetime-local" [(ngModel)]="timeline.journeyEndTime" />
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showItineraryModal = false">Cancel</button>
@@ -114,6 +159,57 @@ import { TripRequest, Itinerary } from '../../../core/models/models';
       gap: 20px;
       width: 100%;
     }
+
+    .itinerary-modal {
+      max-width: 620px;
+    }
+
+    .trip-summary-bar {
+      display: flex;
+      gap: 16px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      flex-wrap: wrap;
+    }
+
+    .section-label {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      margin-top: 4px;
+    }
+
+    .section-hint {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      margin-top: -4px;
+    }
+
+    .section-divider {
+      border-top: 1px solid var(--border-light);
+      margin: 24px 0 20px 0;
+    }
+
+    .timeline-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .timeline-inputs .form-group {
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 600px) {
+      .timeline-inputs {
+        grid-template-columns: 1fr;
+      }
+    }
   `]
 })
 export class TravelDeskDashboardComponent implements OnInit {
@@ -124,6 +220,7 @@ export class TravelDeskDashboardComponent implements OnInit {
   itineraryLoading = false;
   returningId: number | null = null;
   itinerary: Partial<Itinerary> = {};
+  timeline: Partial<ChecklistTimeline> = {};
 
   showToastModal = false;
   toastTitle = '';
@@ -148,7 +245,28 @@ export class TravelDeskDashboardComponent implements OnInit {
   openItineraryModal(trip: TripRequest): void {
     this.selectedTrip = trip;
     this.itinerary = {};
+    this.timeline = this.buildDefaultTimeline(trip);
     this.showItineraryModal = true;
+  }
+
+  /**
+   * Pre-fills the checklist timeline with smart defaults based on the trip's
+   * start/end dates and travel requirements. Travel Desk can edit all values.
+   */
+  private buildDefaultTimeline(trip: TripRequest): Partial<ChecklistTimeline> {
+    const start = trip.startDate; // "YYYY-MM-DD"
+    const end = trip.endDate;     // "YYYY-MM-DD"
+
+    // datetime-local format: "YYYY-MM-DDTHH:mm"
+    return {
+      flightBoardingTime:  `${start}T08:00`,   // Day 1, 8:00 AM departure
+      flightLandingTime:   `${start}T11:00`,   // Day 1, 11:00 AM arrival (~3h flight)
+      cabPickupTime:       `${start}T11:30`,   // Day 1, 11:30 AM cab from airport
+      hotelCheckinTime:    `${start}T14:00`,   // Day 1, 2:00 PM hotel check-in
+      hotelCheckoutTime:   `${end}T11:00`,     // Last day, 11:00 AM checkout
+      returnFlightTime:    `${end}T14:00`,     // Last day, 2:00 PM return flight
+      journeyEndTime:      `${end}T17:00`,     // Last day, 5:00 PM arrive home
+    };
   }
 
   submitItinerary(): void {
@@ -156,24 +274,41 @@ export class TravelDeskDashboardComponent implements OnInit {
     this.itineraryLoading = true;
     const tripId = this.selectedTrip.id;
 
+    // Step 1: Create itinerary
     this.tripService.createItinerary(tripId, { ...this.itinerary, tripId } as Itinerary).subscribe({
       next: () => {
-        this.tripService.activateTrip(tripId).subscribe({
-          next: () => {
-            this.itineraryLoading = false;
-            this.showItineraryModal = false;
-            this.showToast('Success', `Trip #${tripId} activated successfully with complete itinerary!`);
-            this.loadApproved();
-          },
-          error: (err) => {
-            this.itineraryLoading = false;
-            this.showToast('Error', err.error?.message || 'Failed to activate trip.');
-          }
-        });
+        // Step 2: Save checklist timeline (if any times were set)
+        const hasTimeline = Object.values(this.timeline).some(v => v && v !== '');
+        if (hasTimeline) {
+          this.tripService.saveChecklistTimeline(tripId, { ...this.timeline, tripId } as ChecklistTimeline).subscribe({
+            next: () => this.activateAfterSetup(tripId),
+            error: (err) => {
+              this.itineraryLoading = false;
+              this.showToast('Error', err.error?.message || 'Failed to save checklist timeline.');
+            }
+          });
+        } else {
+          this.activateAfterSetup(tripId);
+        }
       },
       error: (err) => {
         this.itineraryLoading = false;
         this.showToast('Error', err.error?.message || 'Failed to create itinerary.');
+      }
+    });
+  }
+
+  private activateAfterSetup(tripId: number): void {
+    this.tripService.activateTrip(tripId).subscribe({
+      next: () => {
+        this.itineraryLoading = false;
+        this.showItineraryModal = false;
+        this.showToast('Success', `Trip #${tripId} activated successfully with complete itinerary and timeline!`);
+        this.loadApproved();
+      },
+      error: (err) => {
+        this.itineraryLoading = false;
+        this.showToast('Error', err.error?.message || 'Failed to activate trip.');
       }
     });
   }

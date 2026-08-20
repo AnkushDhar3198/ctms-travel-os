@@ -1,11 +1,14 @@
 package com.ctms.service;
 
+import com.ctms.dto.ChecklistTimelineDTO;
 import com.ctms.dto.ItineraryDTO;
+import com.ctms.entity.TripChecklistTimeline;
 import com.ctms.entity.TripItinerary;
 import com.ctms.entity.TripMilestones;
 import com.ctms.entity.TripRequest;
 import com.ctms.entity.enums.TripStatus;
 import com.ctms.exception.ResourceNotFoundException;
+import com.ctms.repository.TripChecklistTimelineRepository;
 import com.ctms.repository.TripItineraryRepository;
 import com.ctms.repository.TripMilestonesRepository;
 import com.ctms.repository.TripRequestRepository;
@@ -13,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ public class ItineraryService {
     private final TripItineraryRepository itineraryRepository;
     private final TripRequestRepository tripRequestRepository;
     private final TripMilestonesRepository milestonesRepository;
+    private final TripChecklistTimelineRepository timelineRepository;
 
     /**
      * Create or update itinerary for an approved trip (Travel Desk action).
@@ -115,6 +121,64 @@ public class ItineraryService {
     }
 
     /**
+     * Save or update the checklist timeline for a trip (Travel Desk action).
+     * The timeline contains scheduled date/times for each milestone.
+     */
+    @Transactional
+    public ChecklistTimelineDTO saveChecklistTimeline(Long tripId, ChecklistTimelineDTO dto) {
+        TripRequest trip = tripRequestRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip request not found."));
+
+        if (trip.getStatus() != TripStatus.APPROVED && trip.getStatus() != TripStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "Checklist timeline can only be set for approved or active trips. Current status: " +
+                    trip.getStatus().name()
+            );
+        }
+
+        TripChecklistTimeline timeline = timelineRepository.findByTripRequestId(tripId)
+                .orElse(TripChecklistTimeline.builder().tripRequest(trip).build());
+
+        if (dto.getFlightBoardingTime() != null) {
+            timeline.setFlightBoardingTime(LocalDateTime.parse(dto.getFlightBoardingTime()));
+        }
+        if (dto.getFlightLandingTime() != null) {
+            timeline.setFlightLandingTime(LocalDateTime.parse(dto.getFlightLandingTime()));
+        }
+        if (dto.getCabPickupTime() != null) {
+            timeline.setCabPickupTime(LocalDateTime.parse(dto.getCabPickupTime()));
+        }
+        if (dto.getHotelCheckinTime() != null) {
+            timeline.setHotelCheckinTime(LocalDateTime.parse(dto.getHotelCheckinTime()));
+        }
+        if (dto.getHotelCheckoutTime() != null) {
+            timeline.setHotelCheckoutTime(LocalDateTime.parse(dto.getHotelCheckoutTime()));
+        }
+        if (dto.getReturnFlightTime() != null) {
+            timeline.setReturnFlightTime(LocalDateTime.parse(dto.getReturnFlightTime()));
+        }
+        if (dto.getJourneyEndTime() != null) {
+            timeline.setJourneyEndTime(LocalDateTime.parse(dto.getJourneyEndTime()));
+        }
+
+        timelineRepository.save(timeline);
+        log.info("Checklist timeline saved for trip {}", tripId);
+
+        return toTimelineDTO(timeline, tripId);
+    }
+
+    /**
+     * Get checklist timeline for a trip.
+     */
+    public ChecklistTimelineDTO getChecklistTimeline(Long tripId) {
+        TripChecklistTimeline timeline = timelineRepository.findByTripRequestId(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No checklist timeline found for trip ID " + tripId
+                ));
+        return toTimelineDTO(timeline, tripId);
+    }
+
+    /**
      * Mark assets as returned (Travel Desk action).
      */
     @Transactional
@@ -150,6 +214,19 @@ public class ItineraryService {
                 .hotelDetails(it.getHotelDetails())
                 .allocatedAssets(it.getAllocatedAssets())
                 .assetsReturned(it.getAssetsReturned())
+                .build();
+    }
+
+    private ChecklistTimelineDTO toTimelineDTO(TripChecklistTimeline t, Long tripId) {
+        return ChecklistTimelineDTO.builder()
+                .tripId(tripId)
+                .flightBoardingTime(t.getFlightBoardingTime() != null ? t.getFlightBoardingTime().toString() : null)
+                .flightLandingTime(t.getFlightLandingTime() != null ? t.getFlightLandingTime().toString() : null)
+                .cabPickupTime(t.getCabPickupTime() != null ? t.getCabPickupTime().toString() : null)
+                .hotelCheckinTime(t.getHotelCheckinTime() != null ? t.getHotelCheckinTime().toString() : null)
+                .hotelCheckoutTime(t.getHotelCheckoutTime() != null ? t.getHotelCheckoutTime().toString() : null)
+                .returnFlightTime(t.getReturnFlightTime() != null ? t.getReturnFlightTime().toString() : null)
+                .journeyEndTime(t.getJourneyEndTime() != null ? t.getJourneyEndTime().toString() : null)
                 .build();
     }
 }

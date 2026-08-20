@@ -75,6 +75,9 @@ public class TripRequest {
     @OneToOne(mappedBy = "tripRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private TripMilestones milestones;
 
+    @OneToOne(mappedBy = "tripRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private TripChecklistTimeline checklistTimeline;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

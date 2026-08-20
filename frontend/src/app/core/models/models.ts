@@ -38,7 +38,36 @@ export interface TripMilestone {
   hotelCheckedOut: boolean;
   returnFlightBoarded: boolean;
   journeyEnded: boolean;
+  // Verification texts
+  flightBoardedVerification?: string;
+  flightLandedVerification?: string;
+  cabPickedUpVerification?: string;
+  hotelCheckedInVerification?: string;
+  hotelCheckedOutVerification?: string;
+  returnFlightBoardedVerification?: string;
+  journeyEndedVerification?: string;
+  // Actual completion timestamps
+  flightBoardedAt?: string;
+  flightLandedAt?: string;
+  cabPickedUpAt?: string;
+  hotelCheckedInAt?: string;
+  hotelCheckedOutAt?: string;
+  returnFlightBoardedAt?: string;
+  journeyEndedAt?: string;
+  // Scheduled timeline
+  scheduledTimeline?: ChecklistTimeline;
   updatedAt?: string;
+}
+
+export interface ChecklistTimeline {
+  tripId: number;
+  flightBoardingTime?: string;
+  flightLandingTime?: string;
+  cabPickupTime?: string;
+  hotelCheckinTime?: string;
+  hotelCheckoutTime?: string;
+  returnFlightTime?: string;
+  journeyEndTime?: string;
 }
 
 export interface Itinerary {
@@ -94,6 +123,7 @@ export interface ApiError {
 export interface MilestoneUpdate {
   milestoneName: string;
   value: boolean;
+  verificationText: string;
 }
 
 export interface ApprovalRequest {

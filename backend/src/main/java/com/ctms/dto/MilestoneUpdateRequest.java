@@ -13,4 +13,7 @@ public class MilestoneUpdateRequest {
 
     @NotNull(message = "Value is required")
     private Boolean value;
+
+    @NotBlank(message = "Verification is required to complete a milestone")
+    private String verificationText;
 }

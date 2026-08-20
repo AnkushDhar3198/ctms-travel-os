@@ -1,5 +1,6 @@
 package com.ctms.controller;
 
+import com.ctms.dto.ChecklistTimelineDTO;
 import com.ctms.dto.ItineraryDTO;
 import com.ctms.service.ItineraryService;
 import lombok.RequiredArgsConstructor;
@@ -42,5 +43,21 @@ public class ItineraryController {
     public ResponseEntity<Map<String, String>> markAssetsReturned(@PathVariable Long tripId) {
         itineraryService.markAssetsReturned(tripId);
         return ResponseEntity.ok(Map.of("message", "Assets marked as returned."));
+    }
+
+    // ==================== Checklist Timeline ====================
+
+    @PostMapping("/{tripId}/timeline")
+    @PreAuthorize("hasAnyRole('TRAVEL_DESK', 'ADMIN')")
+    public ResponseEntity<ChecklistTimelineDTO> saveTimeline(
+            @PathVariable Long tripId,
+            @RequestBody ChecklistTimelineDTO dto
+    ) {
+        return ResponseEntity.ok(itineraryService.saveChecklistTimeline(tripId, dto));
+    }
+
+    @GetMapping("/{tripId}/timeline")
+    public ResponseEntity<ChecklistTimelineDTO> getTimeline(@PathVariable Long tripId) {
+        return ResponseEntity.ok(itineraryService.getChecklistTimeline(tripId));
     }
 }
