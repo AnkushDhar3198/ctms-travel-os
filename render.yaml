@@ -1,0 +1,14 @@
+# =========================================================================
+# Render Blueprint Specification for CTMS TravelOS
+# =========================================================================
+services:
+  - type: web
+    name: ctms-travel-os
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 8080
