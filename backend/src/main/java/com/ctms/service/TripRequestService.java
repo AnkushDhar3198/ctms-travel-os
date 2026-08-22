@@ -1,9 +1,10 @@
 package com.ctms.service;
 
 import com.ctms.dto.ApprovalRequest;
-import com.ctms.dto.TripRequestDTO;
-import com.ctms.dto.TripMilestoneDTO;
+import com.ctms.dto.ChecklistTimelineDTO;
 import com.ctms.dto.ItineraryDTO;
+import com.ctms.dto.TripMilestoneDTO;
+import com.ctms.dto.TripRequestDTO;
 import com.ctms.entity.*;
 import com.ctms.entity.enums.TripStatus;
 import com.ctms.exception.ResourceNotFoundException;
