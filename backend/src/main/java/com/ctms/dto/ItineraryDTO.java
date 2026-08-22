@@ -10,6 +10,8 @@ public class ItineraryDTO {
     private Long tripId;
     private String pnr;
     private String flightDetails;
+    private String returnPnr;
+    private String returnFlightDetails;
     private String cabDriverName;
     private String cabNumber;
     private String cabDetails;

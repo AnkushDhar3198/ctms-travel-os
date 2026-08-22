@@ -27,6 +27,8 @@ export interface TripRequest {
   updatedAt?: string;
   itinerary?: Itinerary;
   milestones?: TripMilestone;
+  checklistTimeline?: ChecklistTimeline;
+  expenses?: Expense[];
 }
 
 export interface TripMilestone {
@@ -74,6 +76,8 @@ export interface Itinerary {
   tripId: number;
   pnr?: string;
   flightDetails?: string;
+  returnPnr?: string;
+  returnFlightDetails?: string;
   cabDriverName?: string;
   cabNumber?: string;
   cabDetails?: string;

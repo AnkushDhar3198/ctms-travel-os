@@ -24,6 +24,12 @@ public class TripItinerary {
     @Column(name = "flight_details", columnDefinition = "TEXT")
     private String flightDetails;
 
+    @Column(name = "return_pnr", length = 50)
+    private String returnPnr;
+
+    @Column(name = "return_flight_details", columnDefinition = "TEXT")
+    private String returnFlightDetails;
+
     @Column(name = "cab_driver_name")
     private String cabDriverName;
 

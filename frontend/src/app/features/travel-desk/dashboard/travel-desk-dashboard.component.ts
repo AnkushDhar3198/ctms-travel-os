@@ -80,6 +80,9 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
                 <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-primary flex-1" (click)="openItineraryModal(trip)">
                   📝 Build Itinerary
                 </button>
+                <button class="btn btn-sm btn-apple-ghost flex-1" (click)="openTripDetailsModal(trip)">
+                  🔍 Complete Details
+                </button>
                 <button *ngIf="trip.status === 'ACTIVE' && !trip.itinerary?.assetsReturned" class="btn btn-sm btn-secondary flex-1" (click)="markReturned(trip)" [disabled]="trip.id === returningId">
                   {{ trip.id === returningId ? 'Updating...' : '🔄 Mark Assets Returned' }}
                 </button>
@@ -601,6 +604,246 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
       </div>
     </div>
 
+    <!-- Travel Desk Complete End-to-End Trip Details Modal -->
+    <div class="modal-overlay" [class.active]="showCompleteDetailsModal" (click)="showCompleteDetailsModal = false">
+      <div class="modal-container modal-container-lg" (click)="$event.stopPropagation()" style="max-width: 780px;">
+        <div class="modal-header">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🗂️</span>
+              <h3 class="modal-title">Trip #{{ selectedTrip?.id }} · Complete End-to-End Itinerary & Status</h3>
+            </div>
+            <p class="text-xs text-secondary mt-1">Employee: <strong>{{ selectedTrip?.employeeName }}</strong> · Destination: <strong>{{ selectedTrip?.destination }}</strong></p>
+          </div>
+          <button class="modal-close" (click)="showCompleteDetailsModal = false">✕</button>
+        </div>
+        
+        <div class="modal-body" *ngIf="selectedTrip" style="max-height: 76vh; overflow-y: auto;">
+          <!-- 1. Executive Summary -->
+          <div class="p-4 rounded-xl mb-4 bg-primary border" style="border-color: var(--border-light);">
+            <div class="flex justify-between items-start flex-wrap gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-lg font-bold">{{ selectedTrip.destination }}</h4>
+                  <span class="badge" [ngClass]="selectedTrip.status === 'APPROVED' ? 'badge-approved' : 'badge-active'">{{ selectedTrip.status }}</span>
+                </div>
+                <p class="text-xs text-secondary mt-1">
+                  Project: <strong>{{ selectedTrip.projectNo }}</strong> · Client ID: <strong>{{ selectedTrip.clientId }}</strong>
+                  <span *ngIf="selectedTrip.employeeName"> · Employee: <strong>{{ selectedTrip.employeeName }}</strong> ({{ selectedTrip.employeeEmpId }})</span>
+                </p>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-tertiary">Estimated Budget</div>
+                <div class="text-base font-bold text-accent">₹{{ selectedTrip.estimatedCost | number }}</div>
+              </div>
+            </div>
+
+            <div class="grid-3-col mt-3 pt-3 border-t text-xs">
+              <div>
+                <span class="text-tertiary">📅 Travel Dates:</span>
+                <p class="font-semibold mt-0.5">{{ selectedTrip.startDate }} → {{ selectedTrip.endDate }}</p>
+              </div>
+              <div>
+                <span class="text-tertiary">🧳 Extra Luggage:</span>
+                <p class="font-semibold mt-0.5">{{ selectedTrip.extraLuggageKg ? '+' + selectedTrip.extraLuggageKg + ' kg Authorized' : 'Standard' }}</p>
+              </div>
+              <div>
+                <span class="text-tertiary">⚙️ Requested Services:</span>
+                <p class="font-semibold mt-0.5">
+                  <span *ngIf="selectedTrip.needsFlight">✈️ Flight </span>
+                  <span *ngIf="selectedTrip.needsHotel">🏨 Hotel </span>
+                  <span *ngIf="selectedTrip.needsCab">🚕 Cab</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-2 pt-2 border-t text-xs" *ngIf="selectedTrip.remarks">
+              <span class="text-tertiary">💬 Manager Approval Remarks:</span>
+              <p class="italic text-secondary mt-0.5">{{ selectedTrip.remarks }}</p>
+            </div>
+          </div>
+
+          <!-- 2. Full Itinerary & Booking Details -->
+          <div class="section-label mb-2 font-bold text-sm">✈️ Confirmed Itinerary & Transport Logistics</div>
+          
+          <div class="flex flex-col gap-3 mb-4">
+            <!-- Outbound Flight -->
+            <div class="detail-section p-4 rounded-xl bg-primary border" style="border-color: var(--border-light);">
+              <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">🛫</span>
+                  <h4 class="text-sm font-bold text-accent">Outbound Flight Booking</h4>
+                </div>
+                <span class="badge badge-active text-xs" *ngIf="selectedTrip.itinerary?.pnr">PNR: {{ selectedTrip.itinerary?.pnr }}</span>
+              </div>
+              <div class="text-xs text-secondary leading-relaxed">
+                <p><strong>Flight:</strong> {{ selectedTrip.itinerary?.flightDetails || 'Pending Booking' }}</p>
+              </div>
+            </div>
+
+            <!-- Return Flight -->
+            <div class="detail-section p-4 rounded-xl bg-primary border" style="border-left: 4px solid #AF52DE; border-color: var(--border-light); border-left-color: #AF52DE;">
+              <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">🔄</span>
+                  <h4 class="text-sm font-bold" style="color: #AF52DE;">Return Flight Booking</h4>
+                  <span class="return-badge-pill">RETURN</span>
+                </div>
+                <span class="badge text-xs" style="background: rgba(175, 82, 222, 0.15); color: #AF52DE;" *ngIf="selectedTrip.itinerary?.returnPnr || selectedTrip.itinerary?.pnr">
+                  PNR: {{ selectedTrip.itinerary?.returnPnr || selectedTrip.itinerary?.pnr }}
+                </span>
+              </div>
+              <div class="text-xs text-secondary leading-relaxed">
+                <p><strong>Return Details:</strong> {{ selectedTrip.itinerary?.returnFlightDetails || 'Scheduled on ' + selectedTrip.endDate + ' (Return Journey)' }}</p>
+              </div>
+            </div>
+
+            <!-- Hotel Stay -->
+            <div class="detail-section p-4 rounded-xl bg-primary border" style="border-color: var(--border-light);">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-base">🏨</span>
+                <h4 class="text-sm font-bold text-accent">Hotel Accommodation</h4>
+              </div>
+              <div class="text-xs text-secondary leading-relaxed">
+                <p><strong>Hotel:</strong> {{ selectedTrip.itinerary?.hotelName || 'Pending Allocation' }}</p>
+                <p *ngIf="selectedTrip.itinerary?.hotelAddress" class="mt-1"><strong>Address:</strong> {{ selectedTrip.itinerary?.hotelAddress }}</p>
+              </div>
+            </div>
+
+            <!-- Cab Transfer -->
+            <div class="detail-section p-4 rounded-xl bg-primary border" style="border-color: var(--border-light);">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-base">🚕</span>
+                <h4 class="text-sm font-bold text-accent">Dedicated Cab & Chauffeur</h4>
+              </div>
+              <div class="text-xs text-secondary leading-relaxed">
+                <p><strong>Driver:</strong> {{ selectedTrip.itinerary?.cabDriverName || 'Pending Allocation' }}</p>
+                <p *ngIf="selectedTrip.itinerary?.cabNumber" class="mt-1"><strong>Vehicle:</strong> {{ selectedTrip.itinerary?.cabNumber }}</p>
+              </div>
+            </div>
+
+            <!-- Allocated Assets -->
+            <div class="detail-section p-4 rounded-xl bg-primary border" style="border-color: var(--border-light);">
+              <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">💼</span>
+                  <h4 class="text-sm font-bold text-accent">Allocated Corporate Assets</h4>
+                </div>
+                <span class="badge" [ngClass]="selectedTrip.itinerary?.assetsReturned ? 'badge-approved' : 'badge-pending'">
+                  {{ selectedTrip.itinerary?.assetsReturned ? '✓ Assets Returned' : 'In Employee Possession' }}
+                </span>
+              </div>
+              <div class="text-xs text-secondary">
+                <p><strong>Assigned Kit:</strong> {{ selectedTrip.itinerary?.allocatedAssets || 'Standard Kit' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Milestones & Timeline Table -->
+          <div class="section-label mb-2 font-bold text-sm">📍 Journey Milestones & Timeline Execution</div>
+          
+          <div class="detail-section p-4 rounded-xl mb-4 bg-primary border" style="border-color: var(--border-light);">
+            <div style="overflow-x: auto;">
+              <table class="w-full text-xs" style="border-collapse: collapse;">
+                <thead>
+                  <tr class="border-b text-tertiary text-left">
+                    <th class="py-2">Milestone</th>
+                    <th class="py-2">Scheduled Time</th>
+                    <th class="py-2">Actual Timestamp</th>
+                    <th class="py-2">Verification Proof</th>
+                    <th class="py-2 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b">
+                    <td class="py-2 font-medium">🛫 Outbound Flight Boarded</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.checklistTimeline?.flightBoardingTime || selectedTrip.milestones?.scheduledTimeline?.flightBoardingTime | date:'short') || '—' }}</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.milestones?.flightBoardedAt | date:'short') || '—' }}</td>
+                    <td class="py-2">{{ selectedTrip.milestones?.flightBoardedVerification || '—' }}</td>
+                    <td class="py-2 text-right">
+                      <span class="badge" [ngClass]="selectedTrip.milestones?.flightBoarded ? 'badge-approved' : 'badge-pending'">
+                        {{ selectedTrip.milestones?.flightBoarded ? '✓ Done' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr class="border-b">
+                    <td class="py-2 font-medium">🛬 Destination Flight Landed</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.checklistTimeline?.flightLandingTime || selectedTrip.milestones?.scheduledTimeline?.flightLandingTime | date:'short') || '—' }}</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.milestones?.flightLandedAt | date:'short') || '—' }}</td>
+                    <td class="py-2">{{ selectedTrip.milestones?.flightLandedVerification || '—' }}</td>
+                    <td class="py-2 text-right">
+                      <span class="badge" [ngClass]="selectedTrip.milestones?.flightLanded ? 'badge-approved' : 'badge-pending'">
+                        {{ selectedTrip.milestones?.flightLanded ? '✓ Done' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr class="border-b">
+                    <td class="py-2 font-medium">🚕 Cab Picked Up</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.checklistTimeline?.cabPickupTime || selectedTrip.milestones?.scheduledTimeline?.cabPickupTime | date:'short') || '—' }}</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.milestones?.cabPickedUpAt | date:'short') || '—' }}</td>
+                    <td class="py-2">{{ selectedTrip.milestones?.cabPickedUpVerification || '—' }}</td>
+                    <td class="py-2 text-right">
+                      <span class="badge" [ngClass]="selectedTrip.milestones?.cabPickedUp ? 'badge-approved' : 'badge-pending'">
+                        {{ selectedTrip.milestones?.cabPickedUp ? '✓ Done' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr class="border-b">
+                    <td class="py-2 font-medium">🏨 Hotel Checked In</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.checklistTimeline?.hotelCheckinTime || selectedTrip.milestones?.scheduledTimeline?.hotelCheckinTime | date:'short') || '—' }}</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.milestones?.hotelCheckedInAt | date:'short') || '—' }}</td>
+                    <td class="py-2">{{ selectedTrip.milestones?.hotelCheckedInVerification || '—' }}</td>
+                    <td class="py-2 text-right">
+                      <span class="badge" [ngClass]="selectedTrip.milestones?.hotelCheckedIn ? 'badge-approved' : 'badge-pending'">
+                        {{ selectedTrip.milestones?.hotelCheckedIn ? '✓ Done' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr class="border-b">
+                    <td class="py-2 font-medium">🧳 Hotel Checked Out</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.checklistTimeline?.hotelCheckoutTime || selectedTrip.milestones?.scheduledTimeline?.hotelCheckoutTime | date:'short') || '—' }}</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.milestones?.hotelCheckedOutAt | date:'short') || '—' }}</td>
+                    <td class="py-2">{{ selectedTrip.milestones?.hotelCheckedOutVerification || '—' }}</td>
+                    <td class="py-2 text-right">
+                      <span class="badge" [ngClass]="selectedTrip.milestones?.hotelCheckedOut ? 'badge-approved' : 'badge-pending'">
+                        {{ selectedTrip.milestones?.hotelCheckedOut ? '✓ Done' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr class="border-b">
+                    <td class="py-2 font-medium" style="color: #AF52DE;">🛫 Return Flight Boarded</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.checklistTimeline?.returnFlightTime || selectedTrip.milestones?.scheduledTimeline?.returnFlightTime | date:'short') || '—' }}</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.milestones?.returnFlightBoardedAt | date:'short') || '—' }}</td>
+                    <td class="py-2">{{ selectedTrip.milestones?.returnFlightBoardedVerification || '—' }}</td>
+                    <td class="py-2 text-right">
+                      <span class="badge" [ngClass]="selectedTrip.milestones?.returnFlightBoarded ? 'badge-approved' : 'badge-pending'">
+                        {{ selectedTrip.milestones?.returnFlightBoarded ? '✓ Done' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 font-medium">🏠 Journey Completed</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.checklistTimeline?.journeyEndTime || selectedTrip.milestones?.scheduledTimeline?.journeyEndTime | date:'short') || '—' }}</td>
+                    <td class="py-2 text-secondary">{{ (selectedTrip.milestones?.journeyEndedAt | date:'short') || '—' }}</td>
+                    <td class="py-2">{{ selectedTrip.milestones?.journeyEndedVerification || '—' }}</td>
+                    <td class="py-2 text-right">
+                      <span class="badge" [ngClass]="selectedTrip.milestones?.journeyEnded ? 'badge-approved' : 'badge-pending'">
+                        {{ selectedTrip.milestones?.journeyEnded ? '✓ Done' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" (click)="showCompleteDetailsModal = false">Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Apple-Style Notification Toast Modal -->
     <div class="modal-overlay" [class.active]="showToastModal" (click)="showToastModal = false">
       <div class="modal-container modal-container-sm" (click)="$event.stopPropagation()">
@@ -1003,6 +1246,7 @@ export class TravelDeskDashboardComponent implements OnInit {
   allCabs: CabSuggestion[] = [];
   filteredCabs: CabSuggestion[] = [];
 
+  showCompleteDetailsModal = false;
   showToastModal = false;
   toastTitle = '';
   toastMessage = '';
@@ -1074,7 +1318,7 @@ export class TravelDeskDashboardComponent implements OnInit {
    */
   openItineraryModal(trip: TripRequest): void {
     this.selectedTrip = trip;
-    this.itinerary = {};
+    this.itinerary = trip.itinerary ? { ...trip.itinerary } : {};
     this.timeline = this.buildDefaultTimeline(trip);
     this.appliedFlightNotice = '';
     this.showItineraryModal = true;
@@ -1096,7 +1340,7 @@ export class TravelDeskDashboardComponent implements OnInit {
       }
     });
 
-    this.returnFlightDetails = '';
+    this.returnFlightDetails = trip.itinerary?.returnFlightDetails || '';
     this.appliedReturnFlightNotice = '';
 
     // Load hotel and cab suggestions matching destination
@@ -1182,6 +1426,11 @@ export class TravelDeskDashboardComponent implements OnInit {
    */
   applyReturnFlightToItinerary(flight: FlightSuggestion): void {
     this.returnFlightDetails = flight.formattedSummary;
+    this.itinerary.returnFlightDetails = flight.formattedSummary;
+    if (!this.itinerary.returnPnr) {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      this.itinerary.returnPnr = `${flight.airlineCode}-${randomNum}`;
+    }
 
     // Sync return flight time into checklist timeline
     if (flight.boardingTime) {
@@ -1232,6 +1481,17 @@ export class TravelDeskDashboardComponent implements OnInit {
   selectReturnFlightFromDropdown(flight: FlightSuggestion): void {
     this.applyReturnFlightToItinerary(flight);
     this.showReturnFlightDropdown = false;
+  }
+
+  openTripDetailsModal(trip: TripRequest): void {
+    this.selectedTrip = trip;
+    this.showCompleteDetailsModal = true;
+    if (trip.id) {
+      this.tripService.getTripById(trip.id).subscribe({
+        next: (full) => this.selectedTrip = full,
+        error: () => {}
+      });
+    }
   }
 
   onHotelInput(): void {
@@ -1293,6 +1553,11 @@ export class TravelDeskDashboardComponent implements OnInit {
     if (!this.selectedTrip?.id) return;
     this.itineraryLoading = true;
     const tripId = this.selectedTrip.id;
+
+    this.itinerary.returnFlightDetails = this.returnFlightDetails;
+    if (!this.itinerary.returnPnr && this.returnFlightDetails) {
+      this.itinerary.returnPnr = this.itinerary.pnr ? `${this.itinerary.pnr}-R` : `RET-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
 
     // Step 1: Create itinerary
     this.tripService.createItinerary(tripId, { ...this.itinerary, tripId } as Itinerary).subscribe({

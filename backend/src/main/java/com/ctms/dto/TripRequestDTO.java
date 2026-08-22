@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
@@ -50,4 +51,10 @@ public class TripRequestDTO {
 
     // Milestone summary (when available)
     private TripMilestoneDTO milestones;
+
+    // Checklist timeline (when available)
+    private ChecklistTimelineDTO checklistTimeline;
+
+    // Expenses summary (when available)
+    private List<ExpenseDTO> expenses;
 }

@@ -49,6 +49,8 @@ public class ItineraryService {
 
         itinerary.setPnr(dto.getPnr());
         itinerary.setFlightDetails(dto.getFlightDetails());
+        itinerary.setReturnPnr(dto.getReturnPnr());
+        itinerary.setReturnFlightDetails(dto.getReturnFlightDetails());
         itinerary.setCabDriverName(dto.getCabDriverName());
         itinerary.setCabNumber(dto.getCabNumber());
         itinerary.setCabDetails(dto.getCabDetails());
@@ -213,6 +215,8 @@ public class ItineraryService {
                 .tripId(tripId)
                 .pnr(it.getPnr())
                 .flightDetails(it.getFlightDetails())
+                .returnPnr(it.getReturnPnr())
+                .returnFlightDetails(it.getReturnFlightDetails())
                 .cabDriverName(it.getCabDriverName())
                 .cabNumber(it.getCabNumber())
                 .cabDetails(it.getCabDetails())

@@ -27,6 +27,7 @@ public class TripRequestService {
     private final TripMilestonesRepository milestonesRepository;
     private final TripItineraryRepository itineraryRepository;
     private final TripChecklistTimelineRepository timelineRepository;
+    private final ExpenseRepository expenseRepository;
     private final AutoValidationService autoValidationService;
 
     /**
@@ -225,6 +226,8 @@ public class TripRequestService {
                     .tripId(r.getId())
                     .pnr(it.getPnr())
                     .flightDetails(it.getFlightDetails())
+                    .returnPnr(it.getReturnPnr())
+                    .returnFlightDetails(it.getReturnFlightDetails())
                     .cabDriverName(it.getCabDriverName())
                     .cabNumber(it.getCabNumber())
                     .cabDetails(it.getCabDetails())
@@ -235,6 +238,21 @@ public class TripRequestService {
                     .assetsReturned(it.getAssetsReturned())
                     .build());
         }
+
+        // Attach standalone checklist timeline if available
+        ChecklistTimelineDTO timelineDTO = timelineRepository.findByTripRequestId(r.getId())
+                .map(tl -> ChecklistTimelineDTO.builder()
+                        .tripId(r.getId())
+                        .flightBoardingTime(tl.getFlightBoardingTime() != null ? tl.getFlightBoardingTime().toString() : null)
+                        .flightLandingTime(tl.getFlightLandingTime() != null ? tl.getFlightLandingTime().toString() : null)
+                        .cabPickupTime(tl.getCabPickupTime() != null ? tl.getCabPickupTime().toString() : null)
+                        .hotelCheckinTime(tl.getHotelCheckinTime() != null ? tl.getHotelCheckinTime().toString() : null)
+                        .hotelCheckoutTime(tl.getHotelCheckoutTime() != null ? tl.getHotelCheckoutTime().toString() : null)
+                        .returnFlightTime(tl.getReturnFlightTime() != null ? tl.getReturnFlightTime().toString() : null)
+                        .journeyEndTime(tl.getJourneyEndTime() != null ? tl.getJourneyEndTime().toString() : null)
+                        .build())
+                .orElse(null);
+        dto.setChecklistTimeline(timelineDTO);
 
         // Attach milestones - query repository if not loaded on parent object
         TripMilestones m = (r.getMilestones() != null) ? r.getMilestones() : milestonesRepository.findByTripRequestId(r.getId()).orElse(null);
@@ -263,24 +281,28 @@ public class TripRequestService {
                     .returnFlightBoardedAt(m.getReturnFlightBoardedAt() != null ? m.getReturnFlightBoardedAt().toString() : null)
                     .journeyEndedAt(m.getJourneyEndedAt() != null ? m.getJourneyEndedAt().toString() : null)
                     .updatedAt(m.getUpdatedAt() != null ? m.getUpdatedAt().toString() : null)
+                    .scheduledTimeline(timelineDTO)
                     .build();
-
-            // Attach scheduled checklist timeline if available
-            timelineRepository.findByTripRequestId(r.getId()).ifPresent(tl -> {
-                milestoneDTO.setScheduledTimeline(ChecklistTimelineDTO.builder()
-                        .tripId(r.getId())
-                        .flightBoardingTime(tl.getFlightBoardingTime() != null ? tl.getFlightBoardingTime().toString() : null)
-                        .flightLandingTime(tl.getFlightLandingTime() != null ? tl.getFlightLandingTime().toString() : null)
-                        .cabPickupTime(tl.getCabPickupTime() != null ? tl.getCabPickupTime().toString() : null)
-                        .hotelCheckinTime(tl.getHotelCheckinTime() != null ? tl.getHotelCheckinTime().toString() : null)
-                        .hotelCheckoutTime(tl.getHotelCheckoutTime() != null ? tl.getHotelCheckoutTime().toString() : null)
-                        .returnFlightTime(tl.getReturnFlightTime() != null ? tl.getReturnFlightTime().toString() : null)
-                        .journeyEndTime(tl.getJourneyEndTime() != null ? tl.getJourneyEndTime().toString() : null)
-                        .build());
-            });
 
             dto.setMilestones(milestoneDTO);
         }
+
+        // Attach expenses
+        List<com.ctms.dto.ExpenseDTO> expenses = expenseRepository.findByTripRequestId(r.getId())
+                .stream()
+                .map(e -> com.ctms.dto.ExpenseDTO.builder()
+                        .id(e.getId())
+                        .tripId(r.getId())
+                        .fileUrl(e.getFileUrl())
+                        .fileName(e.getFileName())
+                        .amount(e.getAmount())
+                        .description(e.getDescription())
+                        .status(e.getStatus().name())
+                        .createdAt(e.getCreatedAt() != null ? e.getCreatedAt().toString() : null)
+                        .creditedAt(e.getCreditedAt() != null ? e.getCreditedAt().toString() : null)
+                        .build())
+                .collect(Collectors.toList());
+        dto.setExpenses(expenses);
 
         return dto;
     }
