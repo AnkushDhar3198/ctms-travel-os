@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
 import { FlightService } from '../../../core/services/flight.service';
@@ -45,7 +45,7 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
         <div class="animate-fade-in">
           <!-- Trips Grid -->
           <div class="displayed-trips-grid" *ngIf="displayedTrips.length > 0">
-            <div *ngFor="let trip of displayedTrips" class="card trip-card p-6 flex flex-col justify-between">
+            <div *ngFor="let trip of displayedTrips; trackBy: trackByTripId" class="card trip-card p-6 flex flex-col justify-between">
               <div>
                 <div class="flex justify-between items-start mb-2">
                   <div>
@@ -1204,7 +1204,8 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
         grid-template-columns: 1fr;
       }
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TravelDeskDashboardComponent implements OnInit {
   view = 'approved';
@@ -1254,7 +1255,8 @@ export class TravelDeskDashboardComponent implements OnInit {
   constructor(
     public authService: AuthService,
     private tripService: TripService,
-    private flightService: FlightService
+    private flightService: FlightService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -1266,6 +1268,7 @@ export class TravelDeskDashboardComponent implements OnInit {
       next: (t) => {
         this.displayedTrips = t;
         this.approvedCount = t.length;
+        this.cdr.markForCheck();
       },
       error: () => this.displayedTrips = []
     });
@@ -1273,7 +1276,7 @@ export class TravelDeskDashboardComponent implements OnInit {
 
   loadActive(): void {
     this.tripService.getActiveTrips().subscribe({
-      next: (t) => this.displayedTrips = t,
+      next: (t) => { this.displayedTrips = t; this.cdr.markForCheck(); },
       error: () => this.displayedTrips = []
     });
   }
@@ -1621,5 +1624,8 @@ export class TravelDeskDashboardComponent implements OnInit {
     this.toastTitle = title;
     this.toastMessage = message;
     this.showToastModal = true;
+    this.cdr.markForCheck();
   }
+
+  trackByTripId(index: number, trip: TripRequest): number { return trip.id || index; }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
@@ -146,14 +146,14 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
         <!-- ================= MY TRIPS VIEW ================= -->
         <div *ngIf="activeView === 'trips'" class="animate-fade-in">
           <div class="tab-nav mb-6">
-            <button *ngFor="let tab of tripTabs" class="tab-item" [class.active]="activeTab === tab" (click)="activeTab = tab">
+            <button *ngFor="let tab of tripTabs; trackBy: trackByTab" class="tab-item" [class.active]="activeTab === tab" (click)="setActiveTab(tab)">
               {{ tab }} ({{ getTabCount(tab) }})
             </button>
           </div>
 
           <!-- Full Width Multi-Column Cards Grid -->
-          <div class="trips-cards-grid" *ngIf="getFilteredTrips().length > 0">
-            <div *ngFor="let trip of getFilteredTrips()" class="card trip-card p-6 flex flex-col justify-between">
+          <div class="trips-cards-grid" *ngIf="filteredTrips.length > 0">
+            <div *ngFor="let trip of filteredTrips; trackBy: trackByTripId" class="card trip-card p-6 flex flex-col justify-between">
               <div>
                 <div class="flex justify-between items-start mb-3">
                   <div>
@@ -227,7 +227,7 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
             </div>
           </div>
 
-          <div *ngIf="getFilteredTrips().length === 0" class="empty-state card p-12 text-center">
+          <div *ngIf="filteredTrips.length === 0" class="empty-state card p-12 text-center">
             <div class="text-4xl mb-3">🗂️</div>
             <h4 class="text-secondary">No trips found in this category.</h4>
             <button class="btn btn-primary btn-sm mt-4" (click)="activeView = 'raise'">Create Travel Request</button>
@@ -274,7 +274,7 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
                     <span>Popular Business Travel Hubs</span>
                     <span class="text-xs text-secondary">{{ filteredCities.length }} hubs</span>
                   </div>
-                  <div *ngFor="let city of filteredCities" class="apple-dropdown-item" (click)="selectCity(city)">
+                  <div *ngFor="let city of filteredCities; trackBy: trackByCityName" class="apple-dropdown-item" (click)="selectCity(city)">
                     <div class="apple-dropdown-left">
                       <div class="apple-dropdown-icon">📍</div>
                       <div>
@@ -458,7 +458,7 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let exp of uploadedExpenses">
+                  <tr *ngFor="let exp of uploadedExpenses; trackBy: trackByExpId">
                     <td><strong>#EXP-{{ exp.id }}</strong></td>
                     <td>#{{ exp.tripId }}</td>
                     <td>{{ exp.description || 'General Expense' }}</td>
@@ -799,7 +799,7 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let exp of selectedTrip.expenses" class="border-b">
+                  <tr *ngFor="let exp of selectedTrip.expenses; trackBy: trackByExpId" class="border-b">
                     <td class="py-2 font-medium">{{ exp.description || 'Travel Expense' }}</td>
                     <td class="py-2 text-secondary">{{ exp.fileName || 'receipt.pdf' }}</td>
                     <td class="py-2 text-secondary">{{ (exp.createdAt | date:'shortDate') || '—' }}</td>
@@ -1005,12 +1005,14 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
         grid-template-columns: 1fr;
       }
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeDashboardComponent implements OnInit {
   activeView = 'profile';
   profile: UserProfile | null = null;
   trips: TripRequest[] = [];
+  filteredTrips: TripRequest[] = [];
   uploadedExpenses: Expense[] = [];
   tripTabs = ['Upcoming', 'Active', 'Closed', 'Approved', 'Rejected'];
   activeTab = 'Active';
@@ -1055,12 +1057,13 @@ export class EmployeeDashboardComponent implements OnInit {
     private authService: AuthService,
     private tripService: TripService,
     private flightService: FlightService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.tripService.getMyProfile().subscribe({
-      next: (p) => this.profile = p,
+      next: (p) => { this.profile = p; this.cdr.markForCheck(); },
       error: () => {}
     });
     this.filteredCities = this.flightService.searchCities('');
@@ -1171,6 +1174,8 @@ export class EmployeeDashboardComponent implements OnInit {
           this.activeTripId = active.id;
           this.trackingTripId = active.id;
         }
+        this.updateFilteredTrips();
+        this.cdr.markForCheck();
       },
       error: () => {}
     });
@@ -1197,7 +1202,12 @@ export class EmployeeDashboardComponent implements OnInit {
     return titles[this.activeView] || '';
   }
 
-  getFilteredTrips(): TripRequest[] {
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
+    this.updateFilteredTrips();
+  }
+
+  private updateFilteredTrips(): void {
     const statusMap: Record<string, string[]> = {
       'Upcoming': ['PENDING_AUTO_VAL', 'PENDING_MANAGER'],
       'Active': ['ACTIVE'],
@@ -1206,7 +1216,7 @@ export class EmployeeDashboardComponent implements OnInit {
       'Rejected': ['REJECTED', 'REJECTED_SYSTEM'],
     };
     const statuses = statusMap[this.activeTab] || [];
-    return this.trips.filter(t => statuses.includes(t.status || ''));
+    this.filteredTrips = this.trips.filter(t => statuses.includes(t.status || ''));
   }
 
   getTabCount(tab: string): number {
@@ -1354,7 +1364,14 @@ export class EmployeeDashboardComponent implements OnInit {
     this.modalTitle = title;
     this.modalMessage = message;
     this.showModal = true;
+    this.cdr.markForCheck();
   }
+
+  // trackBy functions for efficient DOM recycling
+  trackByTripId(index: number, trip: TripRequest): number { return trip.id || index; }
+  trackByExpId(index: number, item: any): number { return item.id || index; }
+  trackByTab(index: number, tab: string): string { return tab; }
+  trackByCityName(index: number, city: CitySuggestion): string { return city.name; }
 
   logout(): void {
     this.authService.logout();

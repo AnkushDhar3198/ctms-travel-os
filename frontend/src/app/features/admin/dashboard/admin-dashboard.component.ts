@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
 import { UserProfile, TripRequest } from '../../../core/models/models';
@@ -91,7 +91,7 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let user of users" (click)="openUserModal(user)" style="cursor: pointer;">
+                <tr *ngFor="let user of users; trackBy: trackByUserId" (click)="openUserModal(user)" style="cursor: pointer;">
                   <td><strong>{{ user.empId }}</strong></td>
                   <td>
                     <div class="flex items-center gap-3">
@@ -122,12 +122,12 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
           </div>
 
           <div class="tab-nav mb-4">
-            <button class="tab-item" [class.active]="tripFilter === 'ALL'" (click)="tripFilter = 'ALL'">All ({{ trips.length }})</button>
-            <button class="tab-item" [class.active]="tripFilter === 'ACTIVE'" (click)="tripFilter = 'ACTIVE'">Active ({{ countByStatus('ACTIVE') }})</button>
-            <button class="tab-item" [class.active]="tripFilter === 'APPROVED'" (click)="tripFilter = 'APPROVED'">Approved ({{ countByStatus('APPROVED') }})</button>
-            <button class="tab-item" [class.active]="tripFilter === 'PENDING'" (click)="tripFilter = 'PENDING'">Pending ({{ countPending() }})</button>
-            <button class="tab-item" [class.active]="tripFilter === 'CLOSED'" (click)="tripFilter = 'CLOSED'">Closed ({{ countByStatus('CLOSED') }})</button>
-            <button class="tab-item" [class.active]="tripFilter === 'REJECTED'" (click)="tripFilter = 'REJECTED'">Rejected ({{ countRejected() }})</button>
+            <button class="tab-item" [class.active]="tripFilter === 'ALL'" (click)="setTripFilter('ALL')">All ({{ trips.length }})</button>
+            <button class="tab-item" [class.active]="tripFilter === 'ACTIVE'" (click)="setTripFilter('ACTIVE')">Active ({{ countByStatus('ACTIVE') }})</button>
+            <button class="tab-item" [class.active]="tripFilter === 'APPROVED'" (click)="setTripFilter('APPROVED')">Approved ({{ countByStatus('APPROVED') }})</button>
+            <button class="tab-item" [class.active]="tripFilter === 'PENDING'" (click)="setTripFilter('PENDING')">Pending ({{ countPending() }})</button>
+            <button class="tab-item" [class.active]="tripFilter === 'CLOSED'" (click)="setTripFilter('CLOSED')">Closed ({{ countByStatus('CLOSED') }})</button>
+            <button class="tab-item" [class.active]="tripFilter === 'REJECTED'" (click)="setTripFilter('REJECTED')">Rejected ({{ countRejected() }})</button>
           </div>
 
           <div class="card" style="overflow-x: auto">
@@ -144,7 +144,7 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let trip of getFilteredTrips()" (click)="openTripModal(trip)" style="cursor: pointer;">
+                <tr *ngFor="let trip of filteredTrips; trackBy: trackByTripId" (click)="openTripModal(trip)" style="cursor: pointer;">
                   <td><strong>#{{ trip.id }}</strong></td>
                   <td>{{ trip.employeeName }} ({{ trip.employeeEmpId }})</td>
                   <td>{{ trip.destination }}</td>
@@ -153,7 +153,7 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
                   <td>₹{{ trip.estimatedCost }}</td>
                   <td><span class="badge" [ngClass]="getStatusBadge(trip.status || '')">{{ trip.status }}</span></td>
                 </tr>
-                <tr *ngIf="getFilteredTrips().length === 0">
+                <tr *ngIf="filteredTrips.length === 0">
                   <td colspan="7" class="text-center text-secondary p-8">No trips found.</td>
                 </tr>
               </tbody>
@@ -216,7 +216,7 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
             <div class="card chart-card p-6">
               <h4 class="mb-4">Trip Status Distribution</h4>
               <div class="status-bars">
-                <div *ngFor="let s of statusBreakdown" class="bar-row">
+                <div *ngFor="let s of statusBreakdown; trackBy: trackByLabel" class="bar-row">
                   <span class="bar-label">{{ s.label }}</span>
                   <div class="bar-track">
                     <div class="bar-fill" [ngClass]="s.colorClass" [style.width.%]="getBarWidth(s.count)"></div>
@@ -229,7 +229,7 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
             <div class="card chart-card p-6">
               <h4 class="mb-4">Department Distribution</h4>
               <div class="dept-grid">
-                <div *ngFor="let d of deptBreakdown" class="dept-item">
+                <div *ngFor="let d of deptBreakdown; trackBy: trackByName" class="dept-item">
                   <div class="dept-count">{{ d.count }}</div>
                   <div class="dept-name">{{ d.name }}</div>
                 </div>
@@ -495,7 +495,7 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let exp of selectedTrip.expenses" class="border-b">
+                  <tr *ngFor="let exp of selectedTrip.expenses; trackBy: trackByExpId" class="border-b">
                     <td class="py-2 font-medium">{{ exp.description || 'Expense Claim' }}</td>
                     <td class="py-2 text-secondary">{{ exp.fileName || 'receipt.pdf' }}</td>
                     <td class="py-2 text-secondary">{{ (exp.createdAt | date:'shortDate') || '—' }}</td>
@@ -604,7 +604,8 @@ import { UserProfile, TripRequest } from '../../../core/models/models';
       .chart-card { grid-column: span 1; }
       .bar-label { width: 80px; }
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminDashboardComponent implements OnInit {
   view = 'overview';
@@ -623,8 +624,9 @@ export class AdminDashboardComponent implements OnInit {
   selectedUser: UserProfile | null = null;
   showTripModal = false;
   selectedTrip: TripRequest | null = null;
+  filteredTrips: TripRequest[] = [];
 
-  constructor(public authService: AuthService, private tripService: TripService) {}
+  constructor(public authService: AuthService, private tripService: TripService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -649,6 +651,8 @@ export class AdminDashboardComponent implements OnInit {
         this.tripCount = t.length;
         this.activeTripsCount = this.countByStatus('ACTIVE');
         this.buildStatusBreakdown();
+        this.updateFilteredTrips();
+        this.cdr.markForCheck();
       },
       error: () => {}
     });
@@ -675,12 +679,24 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  getFilteredTrips(): TripRequest[] {
-    if (this.tripFilter === 'ALL') return this.trips;
-    if (this.tripFilter === 'PENDING') return this.trips.filter(t => t.status === 'PENDING_AUTO_VAL' || t.status === 'PENDING_MANAGER');
-    if (this.tripFilter === 'REJECTED') return this.trips.filter(t => t.status === 'REJECTED' || t.status === 'REJECTED_SYSTEM');
-    return this.trips.filter(t => t.status === this.tripFilter);
+  setTripFilter(filter: string): void {
+    this.tripFilter = filter;
+    this.updateFilteredTrips();
   }
+
+  private updateFilteredTrips(): void {
+    if (this.tripFilter === 'ALL') { this.filteredTrips = this.trips; return; }
+    if (this.tripFilter === 'PENDING') { this.filteredTrips = this.trips.filter(t => t.status === 'PENDING_AUTO_VAL' || t.status === 'PENDING_MANAGER'); return; }
+    if (this.tripFilter === 'REJECTED') { this.filteredTrips = this.trips.filter(t => t.status === 'REJECTED' || t.status === 'REJECTED_SYSTEM'); return; }
+    this.filteredTrips = this.trips.filter(t => t.status === this.tripFilter);
+  }
+
+  // trackBy functions for efficient DOM recycling
+  trackByTripId(index: number, trip: TripRequest): number { return trip.id || index; }
+  trackByUserId(index: number, user: UserProfile): string { return user.empId || '' + index; }
+  trackByLabel(index: number, item: { label: string }): string { return item.label; }
+  trackByName(index: number, item: { name: string }): string { return item.name; }
+  trackByExpId(index: number, item: any): number { return item.id || index; }
 
   countByStatus(status: string): number {
     return this.trips.filter(t => t.status === status).length;

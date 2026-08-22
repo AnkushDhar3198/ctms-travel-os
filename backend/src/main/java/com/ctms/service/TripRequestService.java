@@ -80,20 +80,22 @@ public class TripRequestService {
     }
 
     /**
-     * Get all trips for an employee.
+     * Get all trips for an employee (optimized: single JOIN FETCH query).
      */
+    @Transactional(readOnly = true)
     public List<TripRequestDTO> getTripsForEmployee(Long employeeId) {
-        return tripRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId)
+        return tripRequestRepository.findByEmployeeIdWithDetails(employeeId)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get trips by status (for manager, travel desk, etc.)
+     * Get trips by status (optimized: single JOIN FETCH query).
      */
+    @Transactional(readOnly = true)
     public List<TripRequestDTO> getTripsByStatus(TripStatus status) {
-        return tripRequestRepository.findByStatusOrderByCreatedAtDesc(status)
+        return tripRequestRepository.findByStatusWithDetails(status)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -102,6 +104,7 @@ public class TripRequestService {
     /**
      * Get all pending requests for manager review.
      */
+    @Transactional(readOnly = true)
     public List<TripRequestDTO> getPendingManagerRequests() {
         return getTripsByStatus(TripStatus.PENDING_MANAGER);
     }
@@ -109,6 +112,7 @@ public class TripRequestService {
     /**
      * Get all approved requests for travel desk.
      */
+    @Transactional(readOnly = true)
     public List<TripRequestDTO> getApprovedRequests() {
         return getTripsByStatus(TripStatus.APPROVED);
     }
@@ -116,15 +120,17 @@ public class TripRequestService {
     /**
      * Get all active trips.
      */
+    @Transactional(readOnly = true)
     public List<TripRequestDTO> getActiveTrips() {
         return getTripsByStatus(TripStatus.ACTIVE);
     }
 
     /**
-     * Get all trips (admin view).
+     * Get all trips (admin view, optimized: single JOIN FETCH query).
      */
+    @Transactional(readOnly = true)
     public List<TripRequestDTO> getAllTrips() {
-        return tripRequestRepository.findAllByOrderByCreatedAtDesc()
+        return tripRequestRepository.findAllWithDetails()
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -186,14 +192,20 @@ public class TripRequestService {
     }
 
     /**
-     * Get a single trip by ID.
+     * Get a single trip by ID (optimized: single JOIN FETCH query).
      */
+    @Transactional(readOnly = true)
     public TripRequestDTO getTripById(Long tripId) {
-        TripRequest trip = tripRequestRepository.findById(tripId)
+        TripRequest trip = tripRequestRepository.findByIdWithDetails(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip request not found."));
         return toDTO(trip);
     }
 
+    /**
+     * Map entity to DTO. Optimized to use already-fetched JPA relationships
+     * from JOIN FETCH queries, avoiding N+1 extra queries.
+     * Only expenses (not a JPA relationship on TripRequest) require a separate query.
+     */
     private TripRequestDTO toDTO(TripRequest r) {
         TripRequestDTO dto = TripRequestDTO.builder()
                 .id(r.getId())
@@ -214,13 +226,14 @@ public class TripRequestService {
                 .updatedAt(r.getUpdatedAt() != null ? r.getUpdatedAt().toString() : null)
                 .build();
 
+        // Employee — already loaded via JOIN FETCH, no extra query
         if (r.getEmployee() != null) {
             dto.setEmployeeName(r.getEmployee().getName());
             dto.setEmployeeEmpId(r.getEmployee().getEmpId());
         }
 
-        // Attach itinerary - query repository if not loaded on parent object
-        TripItinerary it = (r.getItinerary() != null) ? r.getItinerary() : itineraryRepository.findByTripRequestId(r.getId()).orElse(null);
+        // Itinerary — already loaded via JOIN FETCH, no extra query
+        TripItinerary it = r.getItinerary();
         if (it != null) {
             dto.setItinerary(ItineraryDTO.builder()
                     .tripId(r.getId())
@@ -239,23 +252,25 @@ public class TripRequestService {
                     .build());
         }
 
-        // Attach standalone checklist timeline if available
-        ChecklistTimelineDTO timelineDTO = timelineRepository.findByTripRequestId(r.getId())
-                .map(tl -> ChecklistTimelineDTO.builder()
-                        .tripId(r.getId())
-                        .flightBoardingTime(tl.getFlightBoardingTime() != null ? tl.getFlightBoardingTime().toString() : null)
-                        .flightLandingTime(tl.getFlightLandingTime() != null ? tl.getFlightLandingTime().toString() : null)
-                        .cabPickupTime(tl.getCabPickupTime() != null ? tl.getCabPickupTime().toString() : null)
-                        .hotelCheckinTime(tl.getHotelCheckinTime() != null ? tl.getHotelCheckinTime().toString() : null)
-                        .hotelCheckoutTime(tl.getHotelCheckoutTime() != null ? tl.getHotelCheckoutTime().toString() : null)
-                        .returnFlightTime(tl.getReturnFlightTime() != null ? tl.getReturnFlightTime().toString() : null)
-                        .journeyEndTime(tl.getJourneyEndTime() != null ? tl.getJourneyEndTime().toString() : null)
-                        .build())
-                .orElse(null);
+        // Checklist timeline — already loaded via JOIN FETCH, no extra query
+        TripChecklistTimeline tl = r.getChecklistTimeline();
+        ChecklistTimelineDTO timelineDTO = null;
+        if (tl != null) {
+            timelineDTO = ChecklistTimelineDTO.builder()
+                    .tripId(r.getId())
+                    .flightBoardingTime(tl.getFlightBoardingTime() != null ? tl.getFlightBoardingTime().toString() : null)
+                    .flightLandingTime(tl.getFlightLandingTime() != null ? tl.getFlightLandingTime().toString() : null)
+                    .cabPickupTime(tl.getCabPickupTime() != null ? tl.getCabPickupTime().toString() : null)
+                    .hotelCheckinTime(tl.getHotelCheckinTime() != null ? tl.getHotelCheckinTime().toString() : null)
+                    .hotelCheckoutTime(tl.getHotelCheckoutTime() != null ? tl.getHotelCheckoutTime().toString() : null)
+                    .returnFlightTime(tl.getReturnFlightTime() != null ? tl.getReturnFlightTime().toString() : null)
+                    .journeyEndTime(tl.getJourneyEndTime() != null ? tl.getJourneyEndTime().toString() : null)
+                    .build();
+        }
         dto.setChecklistTimeline(timelineDTO);
 
-        // Attach milestones - query repository if not loaded on parent object
-        TripMilestones m = (r.getMilestones() != null) ? r.getMilestones() : milestonesRepository.findByTripRequestId(r.getId()).orElse(null);
+        // Milestones — already loaded via JOIN FETCH, no extra query
+        TripMilestones m = r.getMilestones();
         if (m != null) {
             TripMilestoneDTO milestoneDTO = TripMilestoneDTO.builder()
                     .tripId(r.getId())
@@ -287,7 +302,7 @@ public class TripRequestService {
             dto.setMilestones(milestoneDTO);
         }
 
-        // Attach expenses
+        // Expenses — only query that still needs a separate DB call (not a JPA relationship)
         List<com.ctms.dto.ExpenseDTO> expenses = expenseRepository.findByTripRequestId(r.getId())
                 .stream()
                 .map(e -> com.ctms.dto.ExpenseDTO.builder()

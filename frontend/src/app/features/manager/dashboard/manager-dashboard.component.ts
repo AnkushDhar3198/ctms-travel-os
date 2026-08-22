@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
@@ -51,7 +51,7 @@ import { TripRequest, ApprovalRequest } from '../../../core/models/models';
         <div class="animate-fade-in">
           <!-- Trips Grid -->
           <div class="displayed-trips-grid" *ngIf="displayedTrips.length > 0">
-            <div *ngFor="let trip of displayedTrips" class="card trip-card p-6 flex flex-col justify-between">
+            <div *ngFor="let trip of displayedTrips; trackBy: trackByTripId" class="card trip-card p-6 flex flex-col justify-between">
               <div>
                 <div class="flex justify-between items-start mb-2">
                   <div>
@@ -439,7 +439,7 @@ import { TripRequest, ApprovalRequest } from '../../../core/models/models';
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let exp of selectedTrip.expenses" class="border-b">
+                  <tr *ngFor="let exp of selectedTrip.expenses; trackBy: trackByExpId" class="border-b">
                     <td class="py-2 font-medium">{{ exp.description || 'Expense Claim' }}</td>
                     <td class="py-2 text-secondary">{{ exp.fileName || 'receipt.pdf' }}</td>
                     <td class="py-2 text-secondary">{{ (exp.createdAt | date:'shortDate') || '—' }}</td>
@@ -525,7 +525,8 @@ import { TripRequest, ApprovalRequest } from '../../../core/models/models';
     .detail-section {
       border: 1px solid var(--border-light);
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ManagerDashboardComponent implements OnInit {
   view = 'pending';
@@ -546,7 +547,8 @@ export class ManagerDashboardComponent implements OnInit {
 
   constructor(
     public authService: AuthService,
-    private tripService: TripService
+    private tripService: TripService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -570,6 +572,7 @@ export class ManagerDashboardComponent implements OnInit {
       next: (t) => {
         this.displayedTrips = t;
         this.pendingCount = t.length;
+        this.cdr.markForCheck();
       },
       error: () => this.displayedTrips = []
     });
@@ -580,6 +583,7 @@ export class ManagerDashboardComponent implements OnInit {
       next: (t) => {
         this.displayedTrips = t;
         this.activeCount = t.length;
+        this.cdr.markForCheck();
       },
       error: () => this.displayedTrips = []
     });
@@ -661,8 +665,12 @@ export class ManagerDashboardComponent implements OnInit {
         this.showRejectModal = false;
         this.loadPending();
         this.fetchCounts();
+        this.cdr.markForCheck();
       },
-      error: () => { this.rejectLoading = false; }
+      error: () => { this.rejectLoading = false; this.cdr.markForCheck(); }
     });
   }
+
+  trackByTripId(index: number, trip: TripRequest): number { return trip.id || index; }
+  trackByExpId(index: number, item: any): number { return item.id || index; }
 }
