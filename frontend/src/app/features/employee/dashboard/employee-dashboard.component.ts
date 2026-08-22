@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
-import { UserProfile, TripRequest, Expense, TripClosureCheck } from '../../../core/models/models';
+import { FlightService } from '../../../core/services/flight.service';
+import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } from '../../../core/models/models';
 
 @Component({
   selector: 'app-employee-dashboard',
@@ -219,9 +220,40 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck } from '../../../co
                 </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Destination City & Country *</label>
-                <input class="form-input" placeholder="e.g. Mumbai, India / London, UK" [(ngModel)]="newTrip.destination" />
+              <div class="form-group apple-autocomplete-wrap">
+                <label class="form-label flex justify-between">
+                  <span>Destination City & Country *</span>
+                  <span class="text-xs text-accent cursor-pointer" (click)="showDestDropdown = !showDestDropdown">
+                    {{ showDestDropdown ? 'Hide Suggestions' : 'Popular Hubs' }}
+                  </span>
+                </label>
+                <input
+                  class="form-input"
+                  placeholder="e.g. Bengaluru, India / London, UK / Mumbai"
+                  [(ngModel)]="newTrip.destination"
+                  (focus)="showDestDropdown = true"
+                  (input)="onDestInput()"
+                />
+
+                <!-- Apple-style Translucent Destination Dropdown -->
+                <div *ngIf="showDestDropdown && filteredCities.length > 0" class="apple-autocomplete-dropdown">
+                  <div class="apple-dropdown-header">
+                    <span>Popular Business Travel Hubs</span>
+                    <span class="text-xs text-secondary">{{ filteredCities.length }} hubs</span>
+                  </div>
+                  <div *ngFor="let city of filteredCities" class="apple-dropdown-item" (click)="selectCity(city)">
+                    <div class="apple-dropdown-left">
+                      <div class="apple-dropdown-icon">📍</div>
+                      <div>
+                        <div class="apple-dropdown-title">{{ city.name }}, {{ city.country }}</div>
+                        <div class="apple-dropdown-subtitle">Airport: {{ city.airportCode }} Intl</div>
+                      </div>
+                    </div>
+                    <div class="apple-dropdown-right">
+                      <span class="apple-dropdown-badge">{{ city.airportCode }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="form-grid-2">
@@ -614,6 +646,8 @@ export class EmployeeDashboardComponent implements OnInit {
   raiseError = '';
   raiseSuccess = '';
   raiseLoading = false;
+  showDestDropdown = false;
+  filteredCities: CitySuggestion[] = [];
 
   // Expense form
   expenseTripId: number | null = null;
@@ -642,6 +676,7 @@ export class EmployeeDashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private tripService: TripService,
+    private flightService: FlightService,
     private router: Router
   ) {}
 
@@ -650,8 +685,19 @@ export class EmployeeDashboardComponent implements OnInit {
       next: (p) => this.profile = p,
       error: () => {}
     });
+    this.filteredCities = this.flightService.searchCities('');
     this.loadTrips();
     this.loadExpenses();
+  }
+
+  onDestInput(): void {
+    this.filteredCities = this.flightService.searchCities(this.newTrip.destination || '');
+    this.showDestDropdown = true;
+  }
+
+  selectCity(city: CitySuggestion): void {
+    this.newTrip.destination = `${city.name}, ${city.country}`;
+    this.showDestDropdown = false;
   }
 
   loadTrips(): void {

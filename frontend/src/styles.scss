@@ -176,9 +176,9 @@ h4 { font-size: 1.125rem; }
 .btn-lg { padding: 14px 28px; font-size: 0.9375rem; }
 
 /* =====================================================
-   Form Inputs
+   Form Inputs & Autocomplete Containers
    ===================================================== */
-.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; position: relative; }
 .form-label { font-size: 0.8125rem; font-weight: 500; color: var(--text-secondary); }
 
 .form-input {
@@ -192,40 +192,252 @@ h4 { font-size: 1.125rem; }
 .form-input.error { border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-light); }
 textarea.form-input { min-height: 100px; resize: vertical; }
 
+/* Apple-Style Minimal Translucent Autocomplete Dropdown */
+.apple-autocomplete-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.apple-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  z-index: 900;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
+  padding: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: appleDropdownIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes appleDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.apple-dropdown-header {
+  padding: 6px 10px 4px 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.apple-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.apple-dropdown-item:hover, .apple-dropdown-item.active {
+  background: rgba(0, 113, 227, 0.09);
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.apple-dropdown-item:active {
+  transform: scale(0.98);
+}
+
+.apple-dropdown-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.apple-dropdown-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.04);
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.apple-dropdown-title {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.apple-dropdown-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.apple-dropdown-right {
+  text-align: right;
+}
+
+.apple-dropdown-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--accent);
+}
+
 /* =====================================================
-   Modal & Overlay System (Smooth Centered Popups)
+   Modal & Overlay System (Apple Centered Spring Popups)
    ===================================================== */
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.45); backdrop-filter: var(--blur-overlay);
-  -webkit-backdrop-filter: var(--blur-overlay);
-  display: flex; align-items: center; justify-content: center; z-index: 1000;
-  opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  background: rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+  padding: 20px;
 }
 .modal-overlay.active { opacity: 1; visibility: visible; }
 
 .modal-container {
-  background: var(--bg-surface); border: 1px solid var(--border-medium);
-  border-radius: var(--radius-xl); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
-  padding: 28px; max-width: 520px; width: 90%; max-height: 88vh;
-  overflow-y: auto; transform: scale(0.9) translateY(16px); opacity: 0;
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.modal-overlay.active .modal-container {
-  transform: scale(1) translateY(0); opacity: 1;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: saturate(180%) blur(28px);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 22px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.16), 0 0 1px rgba(0, 0, 0, 0.2);
+  padding: 26px 28px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  transform: scale(0.92) translateY(12px);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease;
 }
 
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; }
-.modal-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+.modal-container-sm {
+  max-width: 440px;
+}
+
+.modal-container-md {
+  max-width: 620px;
+}
+
+.modal-container-lg {
+  max-width: 760px;
+}
+
+.modal-overlay.active .modal-container {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; border-bottom: 1px solid var(--border-light);
+  padding-bottom: 12px;
+}
+.modal-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.022em; }
 .modal-close {
   width: 30px; height: 30px; border-radius: 50%; border: none;
-  background: var(--bg-secondary); color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.05); color: var(--text-secondary);
   display: grid; place-items: center; cursor: pointer;
-  transition: var(--transition-fast); font-size: 0.9rem; font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 0.85rem; font-weight: 600;
 }
-.modal-close:hover { background: var(--border-medium); color: var(--text-primary); transform: scale(1.05); }
+.modal-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+  transform: scale(1.08);
+}
+.modal-close:active {
+  transform: scale(0.92);
+}
 .modal-body { margin-bottom: 20px; }
-.modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border-light); }
+.modal-footer {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding-top: 14px; border-top: 1px solid var(--border-light);
+}
+
+/* =====================================================
+   Button Tactile Flick & Apple Styles
+   ===================================================== */
+.btn {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn-apple-ghost {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--text-primary);
+}
+.btn-apple-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 113, 227, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.1);
+}
+
+/* Apple Segmented Filter Nav */
+.apple-segmented-bar {
+  display: flex;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 3px;
+  border-radius: 12px;
+  gap: 3px;
+  margin-bottom: 18px;
+}
+.apple-segment-pill {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+.apple-segment-pill:hover {
+  color: var(--text-primary);
+}
+.apple-segment-pill.active {
+  background: #FFFFFF;
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.apple-segment-pill:active {
+  transform: scale(0.97);
+}
+
 
 /* =====================================================
    Data Tables (Full-width, clean)

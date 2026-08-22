@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { TripService } from '../../../core/services/trip.service';
-import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/models';
+import { FlightService } from '../../../core/services/flight.service';
+import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSuggestion, CabSuggestion } from '../../../core/models/models';
 
 @Component({
   selector: 'app-travel-desk-dashboard',
   template: `
     <div class="dashboard-layout">
+      <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-brand">
           <div class="sidebar-brand-icon">✈</div>
@@ -15,6 +17,7 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
         <nav class="sidebar-nav">
           <button class="sidebar-link" [class.active]="view === 'approved'" (click)="view = 'approved'; loadApproved()">
             <span class="sidebar-link-icon">✅</span> Approved Requests
+            <span class="sidebar-badge" *ngIf="approvedCount > 0">{{ approvedCount }}</span>
           </button>
           <button class="sidebar-link" [class.active]="view === 'active'" (click)="view = 'active'; loadActive()">
             <span class="sidebar-link-icon">🔄</span> Active Trips
@@ -27,26 +30,53 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
         </div>
       </aside>
 
+      <!-- Main Content -->
       <main class="main-content">
-        <div class="page-header animate-fade-in">
-          <h2>{{ view === 'approved' ? 'Approved Requests' : 'Active Trips' }}</h2>
-          <p class="text-secondary">Travel Desk Dashboard</p>
+        <div class="page-header animate-fade-in flex justify-between items-center">
+          <div>
+            <h2>{{ view === 'approved' ? 'Approved Requests' : 'Active Trips' }}</h2>
+            <p class="text-secondary">Travel Desk Flight & Logistics Management</p>
+          </div>
+          <div *ngIf="view === 'approved'" class="text-xs text-secondary font-medium">
+            💡 Flight suggestions automatically matched to employee destination
+          </div>
         </div>
 
         <div class="animate-fade-in">
+          <!-- Trips Grid -->
           <div class="displayed-trips-grid" *ngIf="displayedTrips.length > 0">
             <div *ngFor="let trip of displayedTrips" class="card trip-card p-6 flex flex-col justify-between">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <h4>{{ trip.destination }}</h4>
+                  <div>
+                    <h4 class="text-lg font-bold">{{ trip.destination }}</h4>
+                    <span class="text-xs text-tertiary">Trip #{{ trip.id }} · {{ trip.projectNo }}</span>
+                  </div>
                   <span class="badge" [ngClass]="trip.status === 'APPROVED' ? 'badge-approved' : 'badge-active'">{{ trip.status }}</span>
                 </div>
-                <p class="text-secondary text-sm">Employee: <strong>{{ trip.employeeName }}</strong></p>
-                <p class="text-secondary text-xs mt-1">Dates: <strong>{{ trip.startDate }} → {{ trip.endDate }}</strong></p>
-                <p class="text-secondary text-xs" *ngIf="trip.remarks">Remarks: {{ trip.remarks }}</p>
+                
+                <div class="trip-meta-box p-3 rounded-md mb-3 mt-2 bg-primary">
+                  <p class="text-secondary text-xs">Employee: <strong>{{ trip.employeeName }}</strong></p>
+                  <p class="text-secondary text-xs mt-1">Dates: <strong>{{ trip.startDate }} → {{ trip.endDate }}</strong></p>
+                  <p class="text-secondary text-xs mt-1" *ngIf="trip.extraLuggageKg">Extra Luggage: <strong>+{{ trip.extraLuggageKg }} kg</strong></p>
+                  <p class="text-secondary text-xs mt-1" *ngIf="trip.remarks">Remarks: <em>{{ trip.remarks }}</em></p>
+                </div>
+
+                <div class="flex gap-2 text-xs mb-3">
+                  <span class="tag" *ngIf="trip.needsFlight">✈️ Flight Required</span>
+                  <span class="tag" *ngIf="trip.needsHotel">🏨 Hotel Required</span>
+                  <span class="tag" *ngIf="trip.needsCab">🚖 Cab Required</span>
+                </div>
               </div>
-              <div class="flex gap-3 mt-4 pt-3 border-t">
-                <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-primary flex-1" (click)="openItineraryModal(trip)">📝 Build Itinerary</button>
+
+              <div class="flex gap-2 mt-2 pt-3 border-t flex-wrap">
+                <!-- Flight Suggestions Pop-up trigger -->
+                <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-apple-ghost flex-1" (click)="openFlightSuggestionsModal(trip)">
+                  ✈️ Suggested Flights
+                </button>
+                <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-primary flex-1" (click)="openItineraryModal(trip)">
+                  📝 Build Itinerary
+                </button>
                 <button *ngIf="trip.status === 'ACTIVE' && !trip.itinerary?.assetsReturned" class="btn btn-sm btn-secondary flex-1" (click)="markReturned(trip)" [disabled]="trip.id === returningId">
                   {{ trip.id === returningId ? 'Updating...' : '🔄 Mark Assets Returned' }}
                 </button>
@@ -56,42 +86,308 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
               </div>
             </div>
           </div>
-          <div *ngIf="displayedTrips.length === 0" class="card p-8 text-center">
-            <p class="text-secondary">No requests to display.</p>
+
+          <div *ngIf="displayedTrips.length === 0" class="card p-12 text-center">
+            <div class="text-4xl mb-2">✈️</div>
+            <p class="text-secondary">No requests to display in this category.</p>
           </div>
         </div>
       </main>
     </div>
 
-    <!-- Itinerary Modal (with Timeline Section) -->
-    <div class="modal-overlay" [class.active]="showItineraryModal" (click)="showItineraryModal = false">
-      <div class="modal-container itinerary-modal" (click)="$event.stopPropagation()">
+    <!-- =======================================================
+         Apple Website Style Minimal Centered Flight Suggestions Modal
+         ======================================================= -->
+    <div class="modal-overlay" [class.active]="showFlightModal" (click)="showFlightModal = false">
+      <div class="modal-container modal-container-lg apple-glass-modal" (click)="$event.stopPropagation()">
+        <!-- Modal Header -->
         <div class="modal-header">
-          <h3 class="modal-title">Build Itinerary & Timeline</h3>
-          <button class="modal-close" (click)="showItineraryModal = false">✕</button>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="apple-flight-icon">✈️</span>
+              <h3 class="modal-title">Flight Suggestions for {{ selectedTrip?.destination }}</h3>
+            </div>
+            <p class="text-secondary text-xs mt-1" *ngIf="selectedTrip">
+              Employee: <strong>{{ selectedTrip.employeeName }}</strong> · Travel: <strong>{{ selectedTrip.startDate }} → {{ selectedTrip.endDate }}</strong>
+              <span *ngIf="selectedTrip.extraLuggageKg"> · Extra Luggage: <strong>+{{ selectedTrip.extraLuggageKg }}kg</strong></span>
+            </p>
+          </div>
+          <button class="modal-close" (click)="showFlightModal = false">✕</button>
         </div>
-        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-          <!-- Trip Info Summary -->
+
+        <div class="modal-body">
+          <!-- Segmented Filter Pills -->
+          <div class="apple-segmented-bar">
+            <button class="apple-segment-pill" [class.active]="flightFilter === 'all'" (click)="flightFilter = 'all'">All ({{ flightSuggestions.length }})</button>
+            <button class="apple-segment-pill" [class.active]="flightFilter === 'preferred'" (click)="flightFilter = 'preferred'">Corporate Preferred</button>
+            <button class="apple-segment-pill" [class.active]="flightFilter === 'nonstop'" (click)="flightFilter = 'nonstop'">Non-stop</button>
+            <button class="apple-segment-pill" [class.active]="flightFilter === 'lowest'" (click)="flightFilter = 'lowest'">Lowest Fare</button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="flightSuggestionsLoading" class="p-8 text-center">
+            <div class="spinner spinner-lg mb-3"></div>
+            <p class="text-secondary text-sm">Searching corporate flight network for {{ selectedTrip?.destination }}...</p>
+          </div>
+
+          <!-- Flight List -->
+          <div *ngIf="!flightSuggestionsLoading" class="flex flex-col gap-3">
+            <div *ngFor="let flight of getFilteredFlights()" class="flight-item-card p-4 transition-all">
+              <div class="flex justify-between items-start flex-wrap gap-2">
+                <!-- Airline & Code -->
+                <div class="flex items-center gap-3">
+                  <div class="airline-avatar">{{ flight.airlineLogo }}</div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <strong class="text-sm">{{ flight.airline }}</strong>
+                      <span class="flight-code-badge">{{ flight.flightNumber }}</span>
+                    </div>
+                    <span class="text-xs text-tertiary">{{ flight.aircraft }} · {{ flight.cabinClass }}</span>
+                  </div>
+                </div>
+
+                <!-- Price & Tag -->
+                <div class="text-right">
+                  <div class="text-base font-bold text-accent">{{ flight.currency }}{{ flight.price | number }}</div>
+                  <span class="tag-pill" *ngIf="flight.tag">{{ flight.tag }}</span>
+                </div>
+              </div>
+
+              <!-- Route Schedule Timeline -->
+              <div class="flight-route-strip my-3 p-3 rounded-lg flex items-center justify-between">
+                <div class="text-left">
+                  <div class="flight-time-large">{{ flight.departureTime }}</div>
+                  <div class="text-xs text-secondary">{{ flight.originCode }}</div>
+                </div>
+
+                <div class="flex-1 mx-4 text-center">
+                  <div class="text-xs text-secondary font-medium">{{ flight.duration }}</div>
+                  <div class="flight-line">
+                    <span class="flight-dot"></span>
+                    <span class="flight-plane-icon">✈</span>
+                    <span class="flight-dot"></span>
+                  </div>
+                  <div class="text-xs text-success font-medium">{{ flight.stops }}</div>
+                </div>
+
+                <div class="text-right">
+                  <div class="flight-time-large">{{ flight.arrivalTime }}</div>
+                  <div class="text-xs text-secondary">{{ flight.destinationCode }}</div>
+                </div>
+              </div>
+
+              <!-- Baggage & Action -->
+              <div class="flex justify-between items-center pt-2 border-t flex-wrap gap-2">
+                <span class="text-xs text-secondary">
+                  🧳 Baggage: <strong>{{ flight.baggageAllowance }}</strong>
+                </span>
+                <button class="btn btn-sm btn-primary btn-apple-action" (click)="applyFlightToItinerary(flight)">
+                  ⚡ Select & Pre-fill Itinerary
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="getFilteredFlights().length === 0" class="card p-6 text-center text-secondary text-sm">
+              No flights match the selected filter.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" (click)="showFlightModal = false">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================
+         Itinerary & Timeline Modal (With Smart Suggestions Bar)
+         ======================================================= -->
+    <div class="modal-overlay" [class.active]="showItineraryModal" (click)="closeItineraryModal()">
+      <div class="modal-container modal-container-md apple-glass-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Build Itinerary & Timeline</h3>
+            <p class="text-xs text-secondary mt-1" *ngIf="selectedTrip">Trip #{{ selectedTrip.id }} · {{ selectedTrip.destination }}</p>
+          </div>
+          <button class="modal-close" (click)="closeItineraryModal()">✕</button>
+        </div>
+
+        <div class="modal-body" style="max-height: 72vh; overflow-y: auto;">
+          <!-- Trip Summary Bar -->
           <div class="trip-summary-bar" *ngIf="selectedTrip">
             <span>🧑‍💼 {{ selectedTrip.employeeName }}</span>
             <span>📍 {{ selectedTrip.destination }}</span>
             <span>📅 {{ selectedTrip.startDate }} → {{ selectedTrip.endDate }}</span>
           </div>
 
-          <!-- Itinerary Section -->
-          <div class="section-label">✈️ Booking Details</div>
-          <div class="form-group"><label class="form-label">PNR / Ticket No</label><input class="form-input" [(ngModel)]="itinerary.pnr" placeholder="ABC123" /></div>
-          <div class="form-group"><label class="form-label">Flight Details</label><input class="form-input" [(ngModel)]="itinerary.flightDetails" placeholder="AI-302, DEL→BLR, 14:30" /></div>
-          <div class="form-group"><label class="form-label">Cab Driver Name</label><input class="form-input" [(ngModel)]="itinerary.cabDriverName" /></div>
-          <div class="form-group"><label class="form-label">Cab Number</label><input class="form-input" [(ngModel)]="itinerary.cabNumber" /></div>
-          <div class="form-group"><label class="form-label">Hotel Name</label><input class="form-input" [(ngModel)]="itinerary.hotelName" /></div>
-          <div class="form-group"><label class="form-label">Hotel Address</label><input class="form-input" [(ngModel)]="itinerary.hotelAddress" /></div>
-          <div class="form-group"><label class="form-label">Allocated Assets</label><input class="form-input" [(ngModel)]="itinerary.allocatedAssets" placeholder="Laptop, WiFi Dongle" /></div>
+          <!-- Applied Flight Flash Notification -->
+          <div *ngIf="appliedFlightNotice" class="applied-flight-banner p-3 rounded-lg mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="checkmark-icon">✓</span>
+              <span class="text-xs font-semibold text-success">{{ appliedFlightNotice }}</span>
+            </div>
+            <button class="btn-xs-text" (click)="appliedFlightNotice = ''">✕</button>
+          </div>
+
+          <!-- Smart Flight Recommendation Mini-Carousel -->
+          <div class="smart-flight-bar p-4 rounded-xl mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-accent flex items-center gap-1">
+                <span>✈️</span> Suggested Flights for {{ selectedTrip?.destination }}
+              </span>
+              <button class="btn btn-xs btn-ghost text-accent font-semibold" (click)="openFlightSuggestionsModal(selectedTrip!)">
+                🔍 Browse All ({{ flightSuggestions.length }})
+              </button>
+            </div>
+            
+            <div class="quick-flights-scroll flex gap-2 overflow-x-auto pb-1">
+              <div *ngFor="let f of flightSuggestions.slice(0, 3)" class="quick-flight-chip p-2 rounded-lg cursor-pointer flex-1" (click)="applyFlightToItinerary(f)">
+                <div class="flex justify-between items-center text-xs">
+                  <strong>{{ f.airline }} {{ f.flightNumber }}</strong>
+                  <span class="text-accent font-bold">{{ f.currency }}{{ f.price | number }}</span>
+                </div>
+                <div class="text-xs text-secondary mt-1 flex justify-between">
+                  <span>{{ f.departureTime }} → {{ f.arrivalTime }}</span>
+                  <span class="text-success">{{ f.stops }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Itinerary Section with Minimal Translucent Dropdown Autocompletes -->
+          <div class="section-label">✈️ Booking & Asset Details</div>
+          
+          <div class="form-group">
+            <label class="form-label">PNR / Ticket No</label>
+            <input class="form-input" [(ngModel)]="itinerary.pnr" placeholder="e.g. 6E-IND9421" />
+          </div>
+
+          <!-- Flight Details with Apple Floating Autocomplete -->
+          <div class="form-group apple-autocomplete-wrap">
+            <label class="form-label flex justify-between">
+              <span>Flight Details</span>
+              <span class="text-xs text-accent cursor-pointer" (click)="showFlightDropdown = !showFlightDropdown">
+                {{ showFlightDropdown ? 'Hide Suggestions' : 'Show Suggestions' }}
+              </span>
+            </label>
+            <input
+              class="form-input"
+              [(ngModel)]="itinerary.flightDetails"
+              placeholder="e.g. IndiGo 6E-2041 (DEL 06:15 → BLR 08:50)"
+              (focus)="showFlightDropdown = true"
+              (input)="onFlightInput()"
+            />
+            
+            <!-- Translucent Floating Flight Suggestions Dropdown -->
+            <div *ngIf="showFlightDropdown && filteredFlightDropdown.length > 0" class="apple-autocomplete-dropdown">
+              <div class="apple-dropdown-header">
+                <span>Suggested Flights for {{ selectedTrip?.destination }}</span>
+                <span class="text-xs text-secondary">{{ filteredFlightDropdown.length }} options</span>
+              </div>
+              <div *ngFor="let f of filteredFlightDropdown" class="apple-dropdown-item" (click)="selectFlightFromDropdown(f)">
+                <div class="apple-dropdown-left">
+                  <div class="apple-dropdown-icon">{{ f.airlineLogo }}</div>
+                  <div>
+                    <div class="apple-dropdown-title">{{ f.airline }} {{ f.flightNumber }} ({{ f.departureTime }} - {{ f.arrivalTime }})</div>
+                    <div class="apple-dropdown-subtitle">{{ f.stops }} · {{ f.cabinClass }} · Baggage: {{ f.baggageAllowance }}</div>
+                  </div>
+                </div>
+                <div class="apple-dropdown-right">
+                  <span class="apple-dropdown-badge">{{ f.currency }}{{ f.price | number }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hotel Name with Apple Autocomplete -->
+          <div class="form-group apple-autocomplete-wrap">
+            <label class="form-label flex justify-between">
+              <span>Hotel Name</span>
+              <span class="text-xs text-tertiary">Corporate Luxury Partners</span>
+            </label>
+            <input
+              class="form-input"
+              [(ngModel)]="itinerary.hotelName"
+              placeholder="e.g. The Oberoi / Taj West End"
+              (focus)="showHotelDropdown = true"
+              (input)="onHotelInput()"
+            />
+
+            <!-- Translucent Floating Hotel Suggestions Dropdown -->
+            <div *ngIf="showHotelDropdown && filteredHotels.length > 0" class="apple-autocomplete-dropdown">
+              <div class="apple-dropdown-header">
+                <span>Top Hotels in {{ selectedTrip?.destination }}</span>
+              </div>
+              <div *ngFor="let h of filteredHotels" class="apple-dropdown-item" (click)="selectHotelFromDropdown(h)">
+                <div class="apple-dropdown-left">
+                  <div class="apple-dropdown-icon">🏨</div>
+                  <div>
+                    <div class="apple-dropdown-title">{{ h.name }}</div>
+                    <div class="apple-dropdown-subtitle">{{ h.address }}</div>
+                  </div>
+                </div>
+                <div class="apple-dropdown-right">
+                  <span class="apple-dropdown-badge">{{ h.rating }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Hotel Address</label>
+            <input class="form-input" [(ngModel)]="itinerary.hotelAddress" placeholder="Hotel complete address & landmark" />
+          </div>
+
+          <!-- Cab Driver & Vehicle with Apple Autocomplete -->
+          <div class="grid-2-col">
+            <div class="form-group apple-autocomplete-wrap">
+              <label class="form-label flex justify-between">
+                <span>Cab Driver Name</span>
+                <span class="text-xs text-tertiary">Fleet Roster</span>
+              </label>
+              <input
+                class="form-input"
+                [(ngModel)]="itinerary.cabDriverName"
+                placeholder="Driver full name"
+                (focus)="showCabDropdown = true"
+                (input)="onCabInput()"
+              />
+
+              <!-- Translucent Cab Dropdown -->
+              <div *ngIf="showCabDropdown && filteredCabs.length > 0" class="apple-autocomplete-dropdown">
+                <div class="apple-dropdown-header">
+                  <span>Pre-approved Corporate Chauffeurs</span>
+                </div>
+                <div *ngFor="let c of filteredCabs" class="apple-dropdown-item" (click)="selectCabFromDropdown(c)">
+                  <div class="apple-dropdown-left">
+                    <div class="apple-dropdown-icon">🚕</div>
+                    <div>
+                      <div class="apple-dropdown-title">{{ c.driverName }} ({{ c.provider }})</div>
+                      <div class="apple-dropdown-subtitle">{{ c.vehicleModel }} · {{ c.vehicleNumber }}</div>
+                    </div>
+                  </div>
+                  <div class="apple-dropdown-right">
+                    <span class="apple-dropdown-badge">{{ c.rating }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Cab Number</label>
+              <input class="form-input" [(ngModel)]="itinerary.cabNumber" placeholder="e.g. KA-01-MJ-4521" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Allocated Assets</label>
+            <input class="form-input" [(ngModel)]="itinerary.allocatedAssets" placeholder="e.g. Corporate Laptop, WiFi Dongle, Forex Card" />
+          </div>
 
           <!-- Timeline Section -->
           <div class="section-divider"></div>
           <div class="section-label">🕐 Checklist Timeline</div>
-          <p class="section-hint">Set expected date & time for each milestone based on the employee's travel plan.</p>
+          <p class="section-hint">Auto-calculated milestones synchronized with flight schedules. Customize as needed.</p>
 
           <div class="timeline-inputs">
             <div class="form-group">
@@ -124,8 +420,9 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
             </div>
           </div>
         </div>
+
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showItineraryModal = false">Cancel</button>
+          <button class="btn btn-secondary" (click)="closeItineraryModal()">Cancel</button>
           <button class="btn btn-primary" (click)="submitItinerary()" [disabled]="itineraryLoading">
             {{ itineraryLoading ? 'Saving...' : 'Save & Activate Trip' }}
           </button>
@@ -133,26 +430,37 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
       </div>
     </div>
 
-    <!-- Notification Toast Popup -->
+    <!-- Apple-Style Notification Toast Modal -->
     <div class="modal-overlay" [class.active]="showToastModal" (click)="showToastModal = false">
-      <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-container modal-container-sm" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h3 class="modal-title">{{ toastTitle }}</h3>
           <button class="modal-close" (click)="showToastModal = false">✕</button>
         </div>
         <div class="modal-body">
-          <p>{{ toastMessage }}</p>
+          <p class="text-sm text-secondary">{{ toastMessage }}</p>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" (click)="showToastModal = false">OK</button>
+          <button class="btn btn-primary btn-sm" (click)="showToastModal = false">OK</button>
         </div>
       </div>
     </div>
   `,
   styles: [`
     .dashboard-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
-    .page-header { margin-bottom: 32px; }
-    .page-header h2 { font-size: 1.75rem; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 1.625rem; font-weight: 700; letter-spacing: -0.025em; }
+
+    .sidebar-badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: white;
+      font-size: 0.6875rem;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
     .displayed-trips-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -160,20 +468,185 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
       width: 100%;
     }
 
-    .itinerary-modal {
-      max-width: 620px;
+    .trip-meta-box {
+      border: 1px solid var(--border-light);
     }
 
+    .tag {
+      background: rgba(0, 113, 227, 0.08);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* Apple Modal Styles */
+    .apple-glass-modal {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: saturate(180%) blur(28px);
+      -webkit-backdrop-filter: saturate(180%) blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+
+    .apple-flight-icon {
+      font-size: 1.25rem;
+    }
+
+    .flight-item-card {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .flight-item-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 113, 227, 0.3);
+      box-shadow: 0 8px 24px rgba(0, 113, 227, 0.08);
+    }
+
+    .airline-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: rgba(0, 113, 227, 0.08);
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+    }
+
+    .flight-code-badge {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.06);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .tag-pill {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: #1A9E38;
+      background: rgba(48, 209, 88, 0.12);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      display: inline-block;
+      margin-top: 2px;
+    }
+
+    .flight-route-strip {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+    }
+
+    .flight-time-large {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .flight-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 4px 0;
+      height: 2px;
+      background: var(--border-medium);
+    }
+
+    .flight-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-tertiary);
+    }
+
+    .flight-plane-icon {
+      position: absolute;
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: var(--bg-primary);
+      padding: 0 4px;
+    }
+
+    .btn-apple-action {
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .btn-apple-action:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+    }
+
+    /* Itinerary Modal specific */
     .trip-summary-bar {
       display: flex;
       gap: 16px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       background: var(--bg-secondary);
       border-radius: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       font-size: 0.8125rem;
       font-weight: 500;
       flex-wrap: wrap;
+    }
+
+    .applied-flight-banner {
+      background: rgba(48, 209, 88, 0.12);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+      animation: appleDropdownIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .checkmark-icon {
+      width: 18px;
+      height: 18px;
+      background: var(--success);
+      color: white;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.6875rem;
+      font-weight: 800;
+    }
+
+    .btn-xs-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .smart-flight-bar {
+      background: rgba(0, 113, 227, 0.05);
+      border: 1px solid rgba(0, 113, 227, 0.15);
+    }
+
+    .quick-flight-chip {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      min-width: 160px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .quick-flight-chip:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0, 113, 227, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .btn-xs {
+      padding: 3px 8px;
+      font-size: 0.75rem;
+    }
+
+    .grid-2-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
     .section-label {
@@ -200,13 +673,12 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-
     .timeline-inputs .form-group {
       margin-bottom: 0;
     }
 
     @media (max-width: 600px) {
-      .timeline-inputs {
+      .timeline-inputs, .grid-2-col {
         grid-template-columns: 1fr;
       }
     }
@@ -215,6 +687,7 @@ import { TripRequest, Itinerary, ChecklistTimeline } from '../../../core/models/
 export class TravelDeskDashboardComponent implements OnInit {
   view = 'approved';
   displayedTrips: TripRequest[] = [];
+  approvedCount = 0;
   selectedTrip: TripRequest | null = null;
   showItineraryModal = false;
   itineraryLoading = false;
@@ -222,50 +695,226 @@ export class TravelDeskDashboardComponent implements OnInit {
   itinerary: Partial<Itinerary> = {};
   timeline: Partial<ChecklistTimeline> = {};
 
+  // Flight suggestions state
+  showFlightModal = false;
+  flightSuggestions: FlightSuggestion[] = [];
+  flightSuggestionsLoading = false;
+  flightFilter: 'all' | 'preferred' | 'nonstop' | 'lowest' = 'all';
+  appliedFlightNotice = '';
+
+  // Dropdown autocomplete state for input fields
+  showFlightDropdown = false;
+  filteredFlightDropdown: FlightSuggestion[] = [];
+  
+  showHotelDropdown = false;
+  allHotels: HotelSuggestion[] = [];
+  filteredHotels: HotelSuggestion[] = [];
+
+  showCabDropdown = false;
+  allCabs: CabSuggestion[] = [];
+  filteredCabs: CabSuggestion[] = [];
+
   showToastModal = false;
   toastTitle = '';
   toastMessage = '';
 
-  constructor(public authService: AuthService, private tripService: TripService) {}
+  constructor(
+    public authService: AuthService,
+    private tripService: TripService,
+    private flightService: FlightService
+  ) {}
 
-  ngOnInit(): void { this.loadApproved(); }
+  ngOnInit(): void {
+    this.loadApproved();
+  }
 
   loadApproved(): void {
     this.tripService.getApprovedRequests().subscribe({
-      next: (t) => this.displayedTrips = t, error: () => this.displayedTrips = []
+      next: (t) => {
+        this.displayedTrips = t;
+        this.approvedCount = t.length;
+      },
+      error: () => this.displayedTrips = []
     });
   }
 
   loadActive(): void {
     this.tripService.getActiveTrips().subscribe({
-      next: (t) => this.displayedTrips = t, error: () => this.displayedTrips = []
+      next: (t) => this.displayedTrips = t,
+      error: () => this.displayedTrips = []
     });
   }
 
+  /**
+   * Open the dedicated Apple-style flight suggestions modal
+   */
+  openFlightSuggestionsModal(trip: TripRequest): void {
+    this.selectedTrip = trip;
+    this.flightSuggestionsLoading = true;
+    this.showFlightModal = true;
+    this.flightFilter = 'all';
+
+    const extraLuggage = trip.extraLuggageKg || 0;
+    this.flightService.getFlightSuggestions(trip.destination, 'DEL', trip.startDate, trip.endDate, extraLuggage).subscribe({
+      next: (flights) => {
+        this.flightSuggestions = flights;
+        this.filteredFlightDropdown = flights;
+        this.flightSuggestionsLoading = false;
+      },
+      error: () => {
+        this.flightSuggestionsLoading = false;
+      }
+    });
+  }
+
+  getFilteredFlights(): FlightSuggestion[] {
+    if (this.flightFilter === 'preferred') {
+      return this.flightSuggestions.filter(f => f.tag?.includes('Corporate') || f.tag?.includes('Preferred'));
+    }
+    if (this.flightFilter === 'nonstop') {
+      return this.flightSuggestions.filter(f => f.stops.toLowerCase().includes('non-stop'));
+    }
+    if (this.flightFilter === 'lowest') {
+      return [...this.flightSuggestions].sort((a, b) => a.price - b.price);
+    }
+    return this.flightSuggestions;
+  }
+
+  /**
+   * Open the Itinerary & Checklist Timeline Builder Modal
+   */
   openItineraryModal(trip: TripRequest): void {
     this.selectedTrip = trip;
     this.itinerary = {};
     this.timeline = this.buildDefaultTimeline(trip);
+    this.appliedFlightNotice = '';
     this.showItineraryModal = true;
+
+    // Load flight suggestions for this trip
+    const extraLuggage = trip.extraLuggageKg || 0;
+    this.flightService.getFlightSuggestions(trip.destination, 'DEL', trip.startDate, trip.endDate, extraLuggage).subscribe({
+      next: (flights) => {
+        this.flightSuggestions = flights;
+        this.filteredFlightDropdown = flights;
+      }
+    });
+
+    // Load hotel and cab suggestions matching destination
+    this.allHotels = this.flightService.getHotelSuggestions(trip.destination);
+    this.filteredHotels = this.allHotels;
+
+    this.allCabs = this.flightService.getCabSuggestions(trip.destination);
+    this.filteredCabs = this.allCabs;
+  }
+
+  closeItineraryModal(): void {
+    this.showItineraryModal = false;
+    this.showFlightDropdown = false;
+    this.showHotelDropdown = false;
+    this.showCabDropdown = false;
+  }
+
+  /**
+   * 1-Click Apply Flight to Itinerary & Sync Timeline
+   */
+  applyFlightToItinerary(flight: FlightSuggestion): void {
+    this.itinerary.flightDetails = flight.formattedSummary;
+    
+    // Auto-generate realistic corporate PNR
+    if (!this.itinerary.pnr) {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      this.itinerary.pnr = `${flight.airlineCode}-${randomNum}`;
+    }
+
+    // Auto-sync Checklist Timeline with flight schedules
+    if (flight.boardingTime) {
+      this.timeline.flightBoardingTime = flight.boardingTime;
+    }
+    if (flight.landingTime) {
+      this.timeline.flightLandingTime = flight.landingTime;
+    }
+    if (flight.returnFlightTime) {
+      this.timeline.returnFlightTime = flight.returnFlightTime;
+    }
+
+    this.appliedFlightNotice = `Applied ${flight.airline} ${flight.flightNumber} (${flight.departureTime} → ${flight.arrivalTime}) & synchronized timeline!`;
+    
+    // Close flight modal if it was open
+    this.showFlightModal = false;
+    this.showFlightDropdown = false;
+  }
+
+  // Autocomplete filtering handlers
+  onFlightInput(): void {
+    const q = (this.itinerary.flightDetails || '').toLowerCase();
+    if (!q) {
+      this.filteredFlightDropdown = this.flightSuggestions;
+    } else {
+      this.filteredFlightDropdown = this.flightSuggestions.filter(
+        f => f.airline.toLowerCase().includes(q) ||
+             f.flightNumber.toLowerCase().includes(q) ||
+             f.formattedSummary.toLowerCase().includes(q)
+      );
+    }
+  }
+
+  selectFlightFromDropdown(flight: FlightSuggestion): void {
+    this.applyFlightToItinerary(flight);
+    this.showFlightDropdown = false;
+  }
+
+  onHotelInput(): void {
+    const q = (this.itinerary.hotelName || '').toLowerCase();
+    if (!q) {
+      this.filteredHotels = this.allHotels;
+    } else {
+      this.filteredHotels = this.allHotels.filter(
+        h => h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q)
+      );
+    }
+  }
+
+  selectHotelFromDropdown(hotel: HotelSuggestion): void {
+    this.itinerary.hotelName = hotel.name;
+    this.itinerary.hotelAddress = hotel.address;
+    this.showHotelDropdown = false;
+  }
+
+  onCabInput(): void {
+    const q = (this.itinerary.cabDriverName || '').toLowerCase();
+    if (!q) {
+      this.filteredCabs = this.allCabs;
+    } else {
+      this.filteredCabs = this.allCabs.filter(
+        c => c.driverName.toLowerCase().includes(q) ||
+             c.vehicleNumber.toLowerCase().includes(q) ||
+             c.provider.toLowerCase().includes(q)
+      );
+    }
+  }
+
+  selectCabFromDropdown(cab: CabSuggestion): void {
+    this.itinerary.cabDriverName = `${cab.driverName} (${cab.driverPhone})`;
+    this.itinerary.cabNumber = `${cab.vehicleNumber} (${cab.vehicleModel})`;
+    this.showCabDropdown = false;
   }
 
   /**
    * Pre-fills the checklist timeline with smart defaults based on the trip's
-   * start/end dates and travel requirements. Travel Desk can edit all values.
+   * start/end dates.
    */
   private buildDefaultTimeline(trip: TripRequest): Partial<ChecklistTimeline> {
-    const start = trip.startDate; // "YYYY-MM-DD"
-    const end = trip.endDate;     // "YYYY-MM-DD"
+    const start = trip.startDate;
+    const end = trip.endDate;
 
-    // datetime-local format: "YYYY-MM-DDTHH:mm"
     return {
-      flightBoardingTime:  `${start}T08:00`,   // Day 1, 8:00 AM departure
-      flightLandingTime:   `${start}T11:00`,   // Day 1, 11:00 AM arrival (~3h flight)
-      cabPickupTime:       `${start}T11:30`,   // Day 1, 11:30 AM cab from airport
-      hotelCheckinTime:    `${start}T14:00`,   // Day 1, 2:00 PM hotel check-in
-      hotelCheckoutTime:   `${end}T11:00`,     // Last day, 11:00 AM checkout
-      returnFlightTime:    `${end}T14:00`,     // Last day, 2:00 PM return flight
-      journeyEndTime:      `${end}T17:00`,     // Last day, 5:00 PM arrive home
+      flightBoardingTime:  `${start}T08:00`,
+      flightLandingTime:   `${start}T11:00`,
+      cabPickupTime:       `${start}T11:30`,
+      hotelCheckinTime:    `${start}T14:00`,
+      hotelCheckoutTime:   `${end}T11:00`,
+      returnFlightTime:    `${end}T14:00`,
+      journeyEndTime:      `${end}T17:00`,
     };
   }
 
@@ -277,7 +926,7 @@ export class TravelDeskDashboardComponent implements OnInit {
     // Step 1: Create itinerary
     this.tripService.createItinerary(tripId, { ...this.itinerary, tripId } as Itinerary).subscribe({
       next: () => {
-        // Step 2: Save checklist timeline (if any times were set)
+        // Step 2: Save checklist timeline
         const hasTimeline = Object.values(this.timeline).some(v => v && v !== '');
         if (hasTimeline) {
           this.tripService.saveChecklistTimeline(tripId, { ...this.timeline, tripId } as ChecklistTimeline).subscribe({

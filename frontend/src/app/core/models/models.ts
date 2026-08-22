@@ -143,3 +143,55 @@ export interface TripClosureCheck {
   canClose: boolean;
   closureBlockReason: string;
 }
+
+export interface FlightSuggestion {
+  id: string;
+  airline: string;
+  airlineCode: string;
+  airlineLogo: string;
+  flightNumber: string;
+  aircraft: string;
+  origin: string;
+  originCode: string;
+  destination: string;
+  destinationCode: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  stops: string;
+  price: number;
+  currency: string;
+  cabinClass: string;
+  baggageAllowance: string;
+  tag?: string;
+  formattedSummary: string;
+  boardingTime?: string;
+  landingTime?: string;
+  returnFlightTime?: string;
+}
+
+export interface HotelSuggestion {
+  name: string;
+  rating: string;
+  address: string;
+  category: string;
+  pricePerNight: string;
+  amenities: string;
+}
+
+export interface CabSuggestion {
+  provider: string;
+  driverName: string;
+  driverPhone: string;
+  vehicleNumber: string;
+  vehicleModel: string;
+  rating: string;
+}
+
+export interface CitySuggestion {
+  name: string;
+  country: string;
+  airportCode: string;
+  popular?: boolean;
+}
+
