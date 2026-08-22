@@ -16,7 +16,11 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, Long> 
 
     List<TripRequest> findByStatus(TripStatus status);
 
+    List<TripRequest> findByStatusOrderByCreatedAtDesc(TripStatus status);
+
     List<TripRequest> findByStatusIn(List<TripStatus> statuses);
+
+    List<TripRequest> findAllByOrderByCreatedAtDesc();
 
     long countByEmployeeIdAndStatus(Long employeeId, TripStatus status);
 }

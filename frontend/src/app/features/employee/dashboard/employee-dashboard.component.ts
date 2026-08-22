@@ -289,14 +289,67 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
                 </div>
               </div>
 
-              <div class="form-grid-2">
-                <div class="form-group">
-                  <label class="form-label">Start Date *</label>
-                  <input class="form-input" type="date" [(ngModel)]="newTrip.startDate" />
+              <!-- Apple-Style Interactive Date Selection UI -->
+              <div class="apple-date-selector-card p-4 rounded-xl mb-4">
+                <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                  <label class="form-label mb-0 flex items-center gap-1 font-semibold">
+                    <span>📅</span> Travel Dates & Duration *
+                  </label>
+                  <span class="duration-pill" *ngIf="newTrip.startDate && newTrip.endDate && !isDateInvalid()">
+                    {{ getTripDurationText() }}
+                  </span>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">End Date *</label>
-                  <input class="form-input" type="date" [(ngModel)]="newTrip.endDate" />
+
+                <!-- Apple Quick Date Preset Pills -->
+                <div class="apple-segmented-bar mb-3">
+                  <button class="apple-segment-pill" [class.active]="datePreset === '3-days'" (click)="applyDatePreset('3-days')">3-Day Trip</button>
+                  <button class="apple-segment-pill" [class.active]="datePreset === 'next-week'" (click)="applyDatePreset('next-week')">Next Week</button>
+                  <button class="apple-segment-pill" [class.active]="datePreset === '1-week'" (click)="applyDatePreset('1-week')">1-Week</button>
+                  <button class="apple-segment-pill" [class.active]="datePreset === '2-weeks'" (click)="applyDatePreset('2-weeks')">2-Weeks</button>
+                  <button class="apple-segment-pill" [class.active]="datePreset === 'custom'" (click)="datePreset = 'custom'">Custom</button>
+                </div>
+
+                <!-- Dual Date Pickers Grid -->
+                <div class="date-pickers-grid">
+                  <!-- Start Date Card -->
+                  <div class="date-picker-box p-3 rounded-lg bg-surface">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs text-tertiary font-semibold uppercase">🛫 Departure Date</span>
+                      <span class="text-xs text-accent font-semibold">Start</span>
+                    </div>
+                    <div class="date-display-val text-sm font-bold my-1 text-primary">
+                      {{ getFormattedDate(newTrip.startDate) || 'Select departure date' }}
+                    </div>
+                    <input
+                      class="form-input form-input-apple-date mt-1 w-full"
+                      type="date"
+                      [min]="todayStr"
+                      [(ngModel)]="newTrip.startDate"
+                      (change)="onStartDateChange()"
+                    />
+                  </div>
+
+                  <!-- End Date Card -->
+                  <div class="date-picker-box p-3 rounded-lg bg-surface">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs text-tertiary font-semibold uppercase">🛬 Return Date</span>
+                      <span class="text-xs text-accent font-semibold">End</span>
+                    </div>
+                    <div class="date-display-val text-sm font-bold my-1 text-primary">
+                      {{ getFormattedDate(newTrip.endDate) || 'Select return date' }}
+                    </div>
+                    <input
+                      class="form-input form-input-apple-date mt-1 w-full"
+                      type="date"
+                      [min]="newTrip.startDate || todayStr"
+                      [(ngModel)]="newTrip.endDate"
+                      (change)="onEndDateChange()"
+                    />
+                  </div>
+                </div>
+
+                <div *ngIf="isDateInvalid()" class="text-xs text-danger mt-2 font-medium">
+                  ⚠️ Return date cannot be earlier than departure date.
                 </div>
               </div>
 
@@ -708,6 +761,38 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
       gap: 16px;
     }
 
+    .apple-date-selector-card {
+      border: 1px solid var(--border-medium);
+      background: rgba(0, 0, 0, 0.02);
+    }
+    .duration-pill {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      background: rgba(0, 113, 227, 0.12);
+      color: var(--accent);
+      border-radius: 9999px;
+    }
+    .date-pickers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .date-picker-box {
+      border: 1px solid var(--border-light);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .date-picker-box:hover, .date-picker-box:focus-within {
+      border-color: rgba(0, 113, 227, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 113, 227, 0.08);
+    }
+    .form-input-apple-date {
+      padding: 7px 10px;
+      font-size: 0.8125rem;
+      background: var(--bg-primary);
+    }
+
     .trips-cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -772,6 +857,10 @@ export class EmployeeDashboardComponent implements OnInit {
   showDestDropdown = false;
   filteredCities: CitySuggestion[] = [];
 
+  // Date selection state & presets
+  todayStr: string = new Date().toISOString().split('T')[0];
+  datePreset: '3-days' | 'next-week' | '1-week' | '2-weeks' | 'custom' = '3-days';
+
   // Expense form
   expenseTripId: number | null = null;
   expenseAmount: number | null = null;
@@ -809,8 +898,92 @@ export class EmployeeDashboardComponent implements OnInit {
       error: () => {}
     });
     this.filteredCities = this.flightService.searchCities('');
+    this.applyDatePreset('3-days');
     this.loadTrips();
     this.loadExpenses();
+  }
+
+  applyDatePreset(preset: '3-days' | 'next-week' | '1-week' | '2-weeks' | 'custom'): void {
+    this.datePreset = preset;
+    const now = new Date();
+
+    const formatDate = (d: Date): string => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    if (preset === '3-days') {
+      const start = new Date(now);
+      start.setDate(now.getDate() + 1);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 2);
+      this.newTrip.startDate = formatDate(start);
+      this.newTrip.endDate = formatDate(end);
+    } else if (preset === 'next-week') {
+      const start = new Date(now);
+      const dayOfWeek = start.getDay();
+      const daysUntilNextMon = (dayOfWeek === 0 ? 1 : 8 - dayOfWeek);
+      start.setDate(now.getDate() + daysUntilNextMon);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 4); // Mon to Fri
+      this.newTrip.startDate = formatDate(start);
+      this.newTrip.endDate = formatDate(end);
+    } else if (preset === '1-week') {
+      const start = new Date(now);
+      start.setDate(now.getDate() + 1);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      this.newTrip.startDate = formatDate(start);
+      this.newTrip.endDate = formatDate(end);
+    } else if (preset === '2-weeks') {
+      const start = new Date(now);
+      start.setDate(now.getDate() + 1);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 13);
+      this.newTrip.startDate = formatDate(start);
+      this.newTrip.endDate = formatDate(end);
+    }
+  }
+
+  getFormattedDate(dateStr?: string): string {
+    if (!dateStr) return '';
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  getTripDurationText(): string {
+    if (!this.newTrip.startDate || !this.newTrip.endDate) return '';
+    const start = new Date(this.newTrip.startDate);
+    const end = new Date(this.newTrip.endDate);
+    const diffTime = end.getTime() - start.getTime();
+    if (diffTime < 0) return 'Invalid Range';
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const nights = Math.max(0, diffDays - 1);
+    if (diffDays === 1) return '⚡ 1 Day (Same-Day Return)';
+    return `⏱️ ${diffDays} Days · ${nights} Nights`;
+  }
+
+  isDateInvalid(): boolean {
+    if (!this.newTrip.startDate || !this.newTrip.endDate) return false;
+    return this.newTrip.endDate < this.newTrip.startDate;
+  }
+
+  onStartDateChange(): void {
+    this.datePreset = 'custom';
+    if (this.newTrip.endDate && this.newTrip.endDate < this.newTrip.startDate) {
+      this.newTrip.endDate = this.newTrip.startDate;
+    }
+  }
+
+  onEndDateChange(): void {
+    this.datePreset = 'custom';
   }
 
   onDestInput(): void {

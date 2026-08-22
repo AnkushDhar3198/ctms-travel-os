@@ -44,11 +44,16 @@ public class TripRequestService {
             );
         }
 
+        // Validate date chronology
+        if (dto.getStartDate() != null && dto.getEndDate() != null && dto.getStartDate().isAfter(dto.getEndDate())) {
+            throw new IllegalArgumentException("Start date cannot be after end date.");
+        }
+
         TripRequest request = TripRequest.builder()
                 .employee(employee)
-                .projectNo(dto.getProjectNo())
-                .clientId(dto.getClientId())
-                .destination(dto.getDestination())
+                .projectNo(dto.getProjectNo() != null ? dto.getProjectNo().trim() : null)
+                .clientId(dto.getClientId() != null ? dto.getClientId().trim() : null)
+                .destination(dto.getDestination() != null ? dto.getDestination().trim() : null)
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .estimatedCost(dto.getEstimatedCost())
@@ -63,7 +68,11 @@ public class TripRequestService {
         log.info("Trip request {} created by employee {}", saved.getId(), employeeId);
 
         // Run auto-validation (Step 2)
-        autoValidationService.validateNewRequest(saved);
+        try {
+            autoValidationService.validateNewRequest(saved);
+        } catch (Exception ex) {
+            log.warn("Trip request {} auto-validation notice: {}", saved.getId(), ex.getMessage());
+        }
 
         return toDTO(saved);
     }
@@ -82,7 +91,7 @@ public class TripRequestService {
      * Get trips by status (for manager, travel desk, etc.)
      */
     public List<TripRequestDTO> getTripsByStatus(TripStatus status) {
-        return tripRequestRepository.findByStatus(status)
+        return tripRequestRepository.findByStatusOrderByCreatedAtDesc(status)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -113,7 +122,7 @@ public class TripRequestService {
      * Get all trips (admin view).
      */
     public List<TripRequestDTO> getAllTrips() {
-        return tripRequestRepository.findAll()
+        return tripRequestRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
