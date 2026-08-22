@@ -72,7 +72,10 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
               <div class="flex gap-2 mt-2 pt-3 border-t flex-wrap">
                 <!-- Flight Suggestions Pop-up trigger -->
                 <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-apple-ghost flex-1" (click)="openFlightSuggestionsModal(trip)">
-                  ✈️ Suggested Flights
+                  ✈️ Outbound Flights
+                </button>
+                <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-apple-ghost-return flex-1" (click)="openReturnFlightSuggestionsModal(trip)">
+                  🔄 Return Flights
                 </button>
                 <button *ngIf="trip.status === 'APPROVED'" class="btn btn-sm btn-primary flex-1" (click)="openItineraryModal(trip)">
                   📝 Build Itinerary
@@ -200,6 +203,100 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
     </div>
 
     <!-- =======================================================
+         Apple Website Style Return Flight Suggestions Modal
+         ======================================================= -->
+    <div class="modal-overlay" [class.active]="showReturnFlightModal" (click)="showReturnFlightModal = false">
+      <div class="modal-container modal-container-lg apple-glass-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="return-flight-icon">🔄</span>
+              <h3 class="modal-title">Return Flights · {{ selectedTrip?.destination }} → Home</h3>
+            </div>
+            <p class="text-secondary text-xs mt-1" *ngIf="selectedTrip">
+              Employee: <strong>{{ selectedTrip.employeeName }}</strong> · Return Date: <strong>{{ selectedTrip.endDate }}</strong>
+              <span *ngIf="selectedTrip.extraLuggageKg"> · Extra Luggage: <strong>+{{ selectedTrip.extraLuggageKg }}kg</strong></span>
+            </p>
+          </div>
+          <button class="modal-close" (click)="showReturnFlightModal = false">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Segmented Filter Pills -->
+          <div class="apple-segmented-bar">
+            <button class="apple-segment-pill" [class.active]="returnFlightFilter === 'all'" (click)="returnFlightFilter = 'all'">All ({{ returnFlightSuggestions.length }})</button>
+            <button class="apple-segment-pill" [class.active]="returnFlightFilter === 'early'" (click)="returnFlightFilter = 'early'">Early Return</button>
+            <button class="apple-segment-pill" [class.active]="returnFlightFilter === 'lowest'" (click)="returnFlightFilter = 'lowest'">Lowest Fare</button>
+          </div>
+
+          <!-- Loading -->
+          <div *ngIf="returnFlightLoading" class="p-8 text-center">
+            <div class="spinner spinner-lg mb-3"></div>
+            <p class="text-secondary text-sm">Searching return flights from {{ selectedTrip?.destination }}...</p>
+          </div>
+
+          <!-- Return Flight List -->
+          <div *ngIf="!returnFlightLoading" class="flex flex-col gap-3">
+            <div *ngFor="let flight of getFilteredReturnFlights()" class="flight-item-card return-flight-card p-4 transition-all">
+              <div class="flex justify-between items-start flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                  <div class="airline-avatar return-avatar">{{ flight.airlineLogo }}</div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <strong class="text-sm">{{ flight.airline }}</strong>
+                      <span class="flight-code-badge">{{ flight.flightNumber }}</span>
+                      <span class="return-badge-pill">RETURN</span>
+                    </div>
+                    <span class="text-xs text-tertiary">{{ flight.aircraft }} · {{ flight.cabinClass }}</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-base font-bold text-return-accent">{{ flight.currency }}{{ flight.price | number }}</div>
+                  <span class="tag-pill return-tag" *ngIf="flight.tag">{{ flight.tag }}</span>
+                </div>
+              </div>
+
+              <div class="flight-route-strip return-route-strip my-3 p-3 rounded-lg flex items-center justify-between">
+                <div class="text-left">
+                  <div class="flight-time-large">{{ flight.departureTime }}</div>
+                  <div class="text-xs text-secondary">{{ flight.originCode }}</div>
+                </div>
+                <div class="flex-1 mx-4 text-center">
+                  <div class="text-xs text-secondary font-medium">{{ flight.duration }}</div>
+                  <div class="flight-line return-line">
+                    <span class="flight-dot"></span>
+                    <span class="flight-plane-icon return-plane">✈</span>
+                    <span class="flight-dot"></span>
+                  </div>
+                  <div class="text-xs text-success font-medium">{{ flight.stops }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="flight-time-large">{{ flight.arrivalTime }}</div>
+                  <div class="text-xs text-secondary">{{ flight.destinationCode }}</div>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center pt-2 border-t flex-wrap gap-2">
+                <span class="text-xs text-secondary">🧳 Baggage: <strong>{{ flight.baggageAllowance }}</strong></span>
+                <button class="btn btn-sm btn-primary btn-return-action" (click)="applyReturnFlightToItinerary(flight)">
+                  ⚡ Select Return Flight
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="getFilteredReturnFlights().length === 0" class="card p-6 text-center text-secondary text-sm">
+              No return flights match the selected filter.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" (click)="showReturnFlightModal = false">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================
          Itinerary & Timeline Modal (With Smart Suggestions Bar)
          ======================================================= -->
     <div class="modal-overlay" [class.active]="showItineraryModal" (click)="closeItineraryModal()">
@@ -255,7 +352,7 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
           </div>
 
           <!-- Itinerary Section with Minimal Translucent Dropdown Autocompletes -->
-          <div class="section-label">✈️ Booking & Asset Details</div>
+          <div class="section-label">✈️ Outbound Booking Details</div>
           
           <div class="form-group">
             <label class="form-label">PNR / Ticket No</label>
@@ -265,7 +362,7 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
           <!-- Flight Details with Apple Floating Autocomplete -->
           <div class="form-group apple-autocomplete-wrap">
             <label class="form-label flex justify-between">
-              <span>Flight Details</span>
+              <span>Outbound Flight</span>
               <span class="text-xs text-accent cursor-pointer" (click)="showFlightDropdown = !showFlightDropdown">
                 {{ showFlightDropdown ? 'Hide Suggestions' : 'Show Suggestions' }}
               </span>
@@ -281,7 +378,7 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
             <!-- Translucent Floating Flight Suggestions Dropdown -->
             <div *ngIf="showFlightDropdown && filteredFlightDropdown.length > 0" class="apple-autocomplete-dropdown">
               <div class="apple-dropdown-header">
-                <span>Suggested Flights for {{ selectedTrip?.destination }}</span>
+                <span>Suggested Outbound Flights for {{ selectedTrip?.destination }}</span>
                 <span class="text-xs text-secondary">{{ filteredFlightDropdown.length }} options</span>
               </div>
               <div *ngFor="let f of filteredFlightDropdown" class="apple-dropdown-item" (click)="selectFlightFromDropdown(f)">
@@ -297,6 +394,80 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- ═══════════════ Return Flight Section ═══════════════ -->
+          <div class="section-divider"></div>
+          <div class="section-label return-section-label">🔄 Return Flight</div>
+
+          <!-- Smart Return Flight Recommendation Mini-Carousel -->
+          <div class="smart-flight-bar return-smart-bar p-4 rounded-xl mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-return-accent flex items-center gap-1">
+                <span>🔄</span> Return Flights · {{ selectedTrip?.destination }} → Home
+              </span>
+              <button class="btn btn-xs btn-ghost text-return-accent font-semibold" (click)="openReturnFlightSuggestionsModal(selectedTrip!)">
+                🔍 Browse All ({{ returnFlightSuggestions.length }})
+              </button>
+            </div>
+            
+            <div class="quick-flights-scroll flex gap-2 overflow-x-auto pb-1">
+              <div *ngFor="let f of returnFlightSuggestions.slice(0, 3)" class="quick-flight-chip return-chip p-2 rounded-lg cursor-pointer flex-1" (click)="applyReturnFlightToItinerary(f)">
+                <div class="flex justify-between items-center text-xs">
+                  <strong>{{ f.airline }} {{ f.flightNumber }}</strong>
+                  <span class="text-return-accent font-bold">{{ f.currency }}{{ f.price | number }}</span>
+                </div>
+                <div class="text-xs text-secondary mt-1 flex justify-between">
+                  <span>{{ f.departureTime }} → {{ f.arrivalTime }}</span>
+                  <span class="text-success">{{ f.stops }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Return Flight Details with Apple Autocomplete -->
+          <div class="form-group apple-autocomplete-wrap">
+            <label class="form-label flex justify-between">
+              <span>Return Flight Details</span>
+              <span class="text-xs text-return-accent cursor-pointer" (click)="showReturnFlightDropdown = !showReturnFlightDropdown">
+                {{ showReturnFlightDropdown ? 'Hide Return Suggestions' : 'Show Return Suggestions' }}
+              </span>
+            </label>
+            <input
+              class="form-input return-input"
+              [(ngModel)]="returnFlightDetails"
+              placeholder="e.g. IndiGo 6E-6119 (BLR 07:00 → DEL 09:35)"
+              (focus)="showReturnFlightDropdown = true"
+              (input)="onReturnFlightInput()"
+            />
+            
+            <div *ngIf="showReturnFlightDropdown && filteredReturnFlightDropdown.length > 0" class="apple-autocomplete-dropdown return-dropdown">
+              <div class="apple-dropdown-header return-dropdown-header">
+                <span>🔄 Return Flights from {{ selectedTrip?.destination }}</span>
+                <span class="text-xs text-secondary">{{ filteredReturnFlightDropdown.length }} options</span>
+              </div>
+              <div *ngFor="let f of filteredReturnFlightDropdown" class="apple-dropdown-item" (click)="selectReturnFlightFromDropdown(f)">
+                <div class="apple-dropdown-left">
+                  <div class="apple-dropdown-icon">{{ f.airlineLogo }}</div>
+                  <div>
+                    <div class="apple-dropdown-title">{{ f.airline }} {{ f.flightNumber }} ({{ f.departureTime }} - {{ f.arrivalTime }})</div>
+                    <div class="apple-dropdown-subtitle">{{ f.stops }} · {{ f.cabinClass }} · {{ f.tag }}</div>
+                  </div>
+                </div>
+                <div class="apple-dropdown-right">
+                  <span class="apple-dropdown-badge return-badge">{{ f.currency }}{{ f.price | number }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Applied Return Flight Notice -->
+          <div *ngIf="appliedReturnFlightNotice" class="applied-flight-banner return-banner p-3 rounded-lg mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="checkmark-icon return-checkmark">✓</span>
+              <span class="text-xs font-semibold text-return-accent">{{ appliedReturnFlightNotice }}</span>
+            </div>
+            <button class="btn-xs-text" (click)="appliedReturnFlightNotice = ''">✕</button>
           </div>
 
           <!-- Hotel Name with Apple Autocomplete -->
@@ -582,6 +753,114 @@ import { TripRequest, Itinerary, ChecklistTimeline, FlightSuggestion, HotelSugge
       box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
     }
 
+    /* ═══════════════ Return Flight Styles ═══════════════ */
+    .btn-apple-ghost-return {
+      background: rgba(175, 82, 222, 0.08);
+      color: #AF52DE;
+      border: 1px solid rgba(175, 82, 222, 0.2);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-apple-ghost-return:hover {
+      background: rgba(175, 82, 222, 0.15);
+      border-color: rgba(175, 82, 222, 0.4);
+      box-shadow: 0 4px 12px rgba(175, 82, 222, 0.15);
+    }
+
+    .text-return-accent { color: #AF52DE; }
+
+    .return-flight-icon { font-size: 1.25rem; }
+
+    .return-flight-card {
+      border-left: 3px solid rgba(175, 82, 222, 0.4);
+    }
+    .return-flight-card:hover {
+      border-color: rgba(175, 82, 222, 0.6);
+      box-shadow: 0 8px 24px rgba(175, 82, 222, 0.1);
+    }
+
+    .return-avatar {
+      background: rgba(175, 82, 222, 0.1);
+    }
+
+    .return-badge-pill {
+      font-size: 0.5625rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: #AF52DE;
+      background: rgba(175, 82, 222, 0.12);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .return-tag {
+      color: #AF52DE;
+      background: rgba(175, 82, 222, 0.12);
+    }
+
+    .return-route-strip {
+      background: rgba(175, 82, 222, 0.04);
+      border-color: rgba(175, 82, 222, 0.15);
+    }
+
+    .return-line { background: rgba(175, 82, 222, 0.3); }
+    .return-plane { color: #AF52DE; }
+
+    .btn-return-action {
+      background: #AF52DE;
+      color: white;
+      font-weight: 600;
+    }
+    .btn-return-action:hover {
+      background: #9B3EC5;
+      box-shadow: 0 4px 12px rgba(175, 82, 222, 0.3);
+    }
+
+    .return-section-label {
+      color: #AF52DE;
+    }
+
+    .return-smart-bar {
+      background: rgba(175, 82, 222, 0.05);
+      border: 1px solid rgba(175, 82, 222, 0.15);
+    }
+
+    .return-chip:hover {
+      border-color: #AF52DE;
+      box-shadow: 0 4px 12px rgba(175, 82, 222, 0.12);
+    }
+
+    .return-input:focus {
+      border-color: rgba(175, 82, 222, 0.5);
+      box-shadow: 0 0 0 3px rgba(175, 82, 222, 0.1);
+    }
+
+    .return-dropdown {
+      border-color: rgba(175, 82, 222, 0.2);
+    }
+
+    .return-dropdown-header {
+      border-bottom-color: rgba(175, 82, 222, 0.15);
+    }
+
+    .return-badge {
+      background: rgba(175, 82, 222, 0.12);
+      color: #AF52DE;
+    }
+
+    .return-banner {
+      background: rgba(175, 82, 222, 0.1);
+      border: 1px solid rgba(175, 82, 222, 0.3);
+    }
+
+    .return-checkmark {
+      background: #AF52DE;
+    }
+
     /* Itinerary Modal specific */
     .trip-summary-bar {
       display: flex;
@@ -695,12 +974,22 @@ export class TravelDeskDashboardComponent implements OnInit {
   itinerary: Partial<Itinerary> = {};
   timeline: Partial<ChecklistTimeline> = {};
 
-  // Flight suggestions state
+  // Outbound flight suggestions state
   showFlightModal = false;
   flightSuggestions: FlightSuggestion[] = [];
   flightSuggestionsLoading = false;
   flightFilter: 'all' | 'preferred' | 'nonstop' | 'lowest' = 'all';
   appliedFlightNotice = '';
+
+  // Return flight suggestions state
+  showReturnFlightModal = false;
+  returnFlightSuggestions: FlightSuggestion[] = [];
+  returnFlightLoading = false;
+  returnFlightFilter: 'all' | 'early' | 'lowest' = 'all';
+  returnFlightDetails = '';
+  appliedReturnFlightNotice = '';
+  showReturnFlightDropdown = false;
+  filteredReturnFlightDropdown: FlightSuggestion[] = [];
 
   // Dropdown autocomplete state for input fields
   showFlightDropdown = false;
@@ -790,7 +1079,7 @@ export class TravelDeskDashboardComponent implements OnInit {
     this.appliedFlightNotice = '';
     this.showItineraryModal = true;
 
-    // Load flight suggestions for this trip
+    // Load outbound flight suggestions for this trip
     const extraLuggage = trip.extraLuggageKg || 0;
     this.flightService.getFlightSuggestions(trip.destination, 'DEL', trip.startDate, trip.endDate, extraLuggage).subscribe({
       next: (flights) => {
@@ -798,6 +1087,17 @@ export class TravelDeskDashboardComponent implements OnInit {
         this.filteredFlightDropdown = flights;
       }
     });
+
+    // Load return flight suggestions
+    this.flightService.getReturnFlightSuggestions(trip.destination, 'DEL', trip.endDate, extraLuggage).subscribe({
+      next: (flights) => {
+        this.returnFlightSuggestions = flights;
+        this.filteredReturnFlightDropdown = flights;
+      }
+    });
+
+    this.returnFlightDetails = '';
+    this.appliedReturnFlightNotice = '';
 
     // Load hotel and cab suggestions matching destination
     this.allHotels = this.flightService.getHotelSuggestions(trip.destination);
@@ -810,6 +1110,7 @@ export class TravelDeskDashboardComponent implements OnInit {
   closeItineraryModal(): void {
     this.showItineraryModal = false;
     this.showFlightDropdown = false;
+    this.showReturnFlightDropdown = false;
     this.showHotelDropdown = false;
     this.showCabDropdown = false;
   }
@@ -844,6 +1145,58 @@ export class TravelDeskDashboardComponent implements OnInit {
     this.showFlightDropdown = false;
   }
 
+  /**
+   * Open the Return Flight Suggestions Modal
+   */
+  openReturnFlightSuggestionsModal(trip: TripRequest): void {
+    this.selectedTrip = trip;
+    this.returnFlightLoading = true;
+    this.showReturnFlightModal = true;
+    this.returnFlightFilter = 'all';
+
+    const extraLuggage = trip.extraLuggageKg || 0;
+    this.flightService.getReturnFlightSuggestions(trip.destination, 'DEL', trip.endDate, extraLuggage).subscribe({
+      next: (flights) => {
+        this.returnFlightSuggestions = flights;
+        this.filteredReturnFlightDropdown = flights;
+        this.returnFlightLoading = false;
+      },
+      error: () => {
+        this.returnFlightLoading = false;
+      }
+    });
+  }
+
+  getFilteredReturnFlights(): FlightSuggestion[] {
+    if (this.returnFlightFilter === 'early') {
+      return this.returnFlightSuggestions.filter(f => f.tag?.includes('Early') || f.tag?.includes('Budget'));
+    }
+    if (this.returnFlightFilter === 'lowest') {
+      return [...this.returnFlightSuggestions].sort((a, b) => a.price - b.price);
+    }
+    return this.returnFlightSuggestions;
+  }
+
+  /**
+   * 1-Click Apply Return Flight to Timeline
+   */
+  applyReturnFlightToItinerary(flight: FlightSuggestion): void {
+    this.returnFlightDetails = flight.formattedSummary;
+
+    // Sync return flight time into checklist timeline
+    if (flight.boardingTime) {
+      this.timeline.returnFlightTime = flight.boardingTime;
+    }
+    if (flight.landingTime) {
+      this.timeline.journeyEndTime = flight.landingTime;
+    }
+
+    this.appliedReturnFlightNotice = `Return: ${flight.airline} ${flight.flightNumber} (${flight.departureTime} → ${flight.arrivalTime}) synced to timeline!`;
+
+    this.showReturnFlightModal = false;
+    this.showReturnFlightDropdown = false;
+  }
+
   // Autocomplete filtering handlers
   onFlightInput(): void {
     const q = (this.itinerary.flightDetails || '').toLowerCase();
@@ -861,6 +1214,24 @@ export class TravelDeskDashboardComponent implements OnInit {
   selectFlightFromDropdown(flight: FlightSuggestion): void {
     this.applyFlightToItinerary(flight);
     this.showFlightDropdown = false;
+  }
+
+  onReturnFlightInput(): void {
+    const q = (this.returnFlightDetails || '').toLowerCase();
+    if (!q) {
+      this.filteredReturnFlightDropdown = this.returnFlightSuggestions;
+    } else {
+      this.filteredReturnFlightDropdown = this.returnFlightSuggestions.filter(
+        f => f.airline.toLowerCase().includes(q) ||
+             f.flightNumber.toLowerCase().includes(q) ||
+             f.formattedSummary.toLowerCase().includes(q)
+      );
+    }
+  }
+
+  selectReturnFlightFromDropdown(flight: FlightSuggestion): void {
+    this.applyReturnFlightToItinerary(flight);
+    this.showReturnFlightDropdown = false;
   }
 
   onHotelInput(): void {

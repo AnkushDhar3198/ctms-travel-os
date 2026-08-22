@@ -60,7 +60,7 @@ public class FlightSuggestionService {
     }
 
     /**
-     * Get suggestions based on a Trip Request ID
+     * Get outbound suggestions based on a Trip Request ID
      */
     public List<FlightSuggestionDTO> getSuggestionsForTrip(Long tripId) {
         TripRequest trip = tripRequestRepository.findById(tripId)
@@ -72,6 +72,109 @@ public class FlightSuggestionService {
         Integer extraLuggage = trip.getExtraLuggageKg() != null ? trip.getExtraLuggageKg() : 0;
 
         return generateSuggestions(destination, "DEL", startDate, endDate, extraLuggage);
+    }
+
+    /**
+     * Get return flight suggestions based on a Trip Request ID.
+     * Returns flights from destination → origin (home city), using endDate as the flight date.
+     */
+    public List<FlightSuggestionDTO> getReturnSuggestionsForTrip(Long tripId) {
+        TripRequest trip = tripRequestRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip request #" + tripId + " not found."));
+
+        String destination = trip.getDestination();
+        String endDate = trip.getEndDate() != null ? trip.getEndDate().toString() : null;
+        Integer extraLuggage = trip.getExtraLuggageKg() != null ? trip.getExtraLuggageKg() : 0;
+
+        // For return: origin is the trip destination, destination is home (DEL)
+        return generateReturnSuggestions(destination, "DEL", endDate, extraLuggage);
+    }
+
+    /**
+     * Generate return flight suggestions (destination → origin/home)
+     */
+    public List<FlightSuggestionDTO> generateReturnSuggestions(
+            String fromCityStr,
+            String toCityStr,
+            String returnDate,
+            Integer extraLuggageKg
+    ) {
+        AirportInfo fromAirport = resolveAirport(fromCityStr, "BLR", "Kempegowda Intl", fromCityStr);
+        AirportInfo toAirport = resolveAirport(toCityStr, "DEL", "Indira Gandhi Intl", "Delhi, India");
+
+        if (fromAirport.code.equalsIgnoreCase(toAirport.code)) {
+            toAirport = fromAirport.code.equals("DEL")
+                ? new AirportInfo("BOM", "Chhatrapati Shivaji Maharaj Intl", "Mumbai, India")
+                : new AirportInfo("DEL", "Indira Gandhi Intl", "Delhi, India");
+        }
+
+        String validReturnDate = (returnDate != null && !returnDate.isBlank()) ? returnDate : "2026-09-05";
+        int extraLuggage = (extraLuggageKg != null) ? extraLuggageKg : 0;
+
+        List<FlightSuggestionDTO> suggestions = new ArrayList<>();
+        boolean isInternational = isInternationalRoute(fromAirport.code);
+
+        if (!isInternational) {
+            suggestions.add(createReturnFlight(
+                    "RF-201", "IndiGo", "6E", "✈️", "6E-6119", "Airbus A320neo",
+                    fromAirport, toAirport, "07:00", "09:35", "2h 35m", "Non-stop",
+                    5450.0, "₹", "Economy (Corporate Flex)",
+                    (15 + extraLuggage) + "kg Check-in + 7kg Cabin", "Early Return",
+                    validReturnDate, "05:00", "09:35"
+            ));
+            suggestions.add(createReturnFlight(
+                    "RF-202", "Air India", "AI", "🛩️", "AI-805", "Boeing 787-8",
+                    fromAirport, toAirport, "10:30", "13:15", "2h 45m", "Non-stop",
+                    5100.0, "₹", "Economy (Complimentary Meal)",
+                    (25 + extraLuggage) + "kg Check-in + 7kg Cabin", "Best Value Return",
+                    validReturnDate, "08:30", "13:15"
+            ));
+            suggestions.add(createReturnFlight(
+                    "RF-203", "Vistara", "UK", "🛫", "UK-853", "Airbus A321neo",
+                    fromAirport, toAirport, "14:00", "16:35", "2h 35m", "Non-stop",
+                    6700.0, "₹", "Premium Economy (Meal + Priority)",
+                    (20 + extraLuggage) + "kg Check-in + 10kg Cabin", "Premium Return",
+                    validReturnDate, "12:00", "16:35"
+            ));
+            suggestions.add(createReturnFlight(
+                    "RF-204", "Akasa Air", "QP", "✈️", "QP-1305", "Boeing 737 MAX 8",
+                    fromAirport, toAirport, "17:15", "19:55", "2h 40m", "Non-stop",
+                    4750.0, "₹", "Economy Saver",
+                    (15 + extraLuggage) + "kg Check-in + 7kg Cabin", "Budget Return",
+                    validReturnDate, "15:15", "19:55"
+            ));
+            suggestions.add(createReturnFlight(
+                    "RF-205", "IndiGo", "6E", "✈️", "6E-6220", "Airbus A320neo",
+                    fromAirport, toAirport, "20:30", "23:10", "2h 40m", "Non-stop",
+                    5850.0, "₹", "Economy (Corporate Flex)",
+                    (15 + extraLuggage) + "kg Check-in + 7kg Cabin", "Late Night Return",
+                    validReturnDate, "18:30", "23:10"
+            ));
+        } else {
+            suggestions.add(createReturnFlight(
+                    "RF-301", "Emirates", "EK", "✈️", "EK-513", "Boeing 777-300ER",
+                    fromAirport, toAirport, "10:00", "16:30", "4h 30m", "Non-stop",
+                    29200.0, "₹", "Economy Flex Plus",
+                    (30 + extraLuggage) + "kg Check-in + 7kg Cabin", "Corporate Return",
+                    validReturnDate, "07:00", "16:30"
+            ));
+            suggestions.add(createReturnFlight(
+                    "RF-302", "Singapore Airlines", "SQ", "🛫", "SQ-404", "Airbus A350-900",
+                    fromAirport, toAirport, "14:30", "22:45", "5h 45m", "Non-stop",
+                    31800.0, "₹", "Economy Standard",
+                    (30 + extraLuggage) + "kg Check-in + 7kg Cabin", "Best Value Return",
+                    validReturnDate, "11:30", "22:45"
+            ));
+            suggestions.add(createReturnFlight(
+                    "RF-303", "British Airways", "BA", "🛩️", "BA-143", "Boeing 787-9",
+                    fromAirport, toAirport, "20:00", "08:45+1", "9h 45m", "Non-stop",
+                    53800.0, "₹", "World Traveller (Economy)",
+                    (23 + extraLuggage) + "kg Check-in + 10kg Cabin", "Overnight Return",
+                    validReturnDate, "17:00", "08:45"
+            ));
+        }
+
+        return suggestions;
     }
 
     /**
@@ -244,6 +347,42 @@ public class FlightSuggestionService {
                 .boardingTime(startDate + "T" + boardingTimeHHmm)
                 .landingTime(startDate + "T" + landingTimeHHmm)
                 .returnFlightTime(endDate + "T" + returnTimeHHmm)
+                .build();
+    }
+
+    private FlightSuggestionDTO createReturnFlight(
+            String id, String airline, String code, String logo, String flightNo, String aircraft,
+            AirportInfo origin, AirportInfo dest, String depTime, String arrTime, String duration, String stops,
+            double price, String currency, String cabinClass, String baggage, String tag,
+            String returnDate, String boardingTimeHHmm, String landingTimeHHmm
+    ) {
+        String formattedSummary = String.format("%s %s (%s %s → %s %s) %s | %s%,.0f | %s",
+                airline, flightNo, origin.code, depTime, dest.code, arrTime, stops, currency, price, cabinClass);
+
+        return FlightSuggestionDTO.builder()
+                .id(id)
+                .airline(airline)
+                .airlineCode(code)
+                .airlineLogo(logo)
+                .flightNumber(flightNo)
+                .aircraft(aircraft)
+                .origin(origin.city + " (" + origin.code + ")")
+                .originCode(origin.code)
+                .destination(dest.city + " (" + dest.code + ")")
+                .destinationCode(dest.code)
+                .departureTime(depTime)
+                .arrivalTime(arrTime)
+                .duration(duration)
+                .stops(stops)
+                .price(price)
+                .currency(currency)
+                .cabinClass(cabinClass)
+                .baggageAllowance(baggage)
+                .tag(tag)
+                .formattedSummary(formattedSummary)
+                .boardingTime(returnDate + "T" + boardingTimeHHmm)
+                .landingTime(returnDate + "T" + landingTimeHHmm)
+                .returnFlightTime(returnDate + "T" + landingTimeHHmm)
                 .build();
     }
 }

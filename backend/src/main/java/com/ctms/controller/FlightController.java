@@ -28,8 +28,25 @@ public class FlightController {
         ));
     }
 
+    @GetMapping("/return-suggestions")
+    public ResponseEntity<List<FlightSuggestionDTO>> getReturnFlightSuggestions(
+            @RequestParam(required = false, defaultValue = "BLR") String from,
+            @RequestParam(required = false, defaultValue = "DEL") String to,
+            @RequestParam(required = false) String returnDate,
+            @RequestParam(required = false, defaultValue = "0") Integer extraLuggage
+    ) {
+        return ResponseEntity.ok(flightSuggestionService.generateReturnSuggestions(
+                from, to, returnDate, extraLuggage
+        ));
+    }
+
     @GetMapping("/trip/{tripId}")
     public ResponseEntity<List<FlightSuggestionDTO>> getTripFlightSuggestions(@PathVariable Long tripId) {
         return ResponseEntity.ok(flightSuggestionService.getSuggestionsForTrip(tripId));
+    }
+
+    @GetMapping("/trip/{tripId}/return")
+    public ResponseEntity<List<FlightSuggestionDTO>> getTripReturnFlightSuggestions(@PathVariable Long tripId) {
+        return ResponseEntity.ok(flightSuggestionService.getReturnSuggestionsForTrip(tripId));
     }
 }
