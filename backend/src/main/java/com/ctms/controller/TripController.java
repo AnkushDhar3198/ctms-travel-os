@@ -96,7 +96,7 @@ public class TripController {
     // ==================== Live Tracking ====================
 
     @PatchMapping("/{id}/milestone")
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'TRAVEL_DESK')")
     public ResponseEntity<TripMilestoneDTO> updateMilestone(
             @PathVariable Long id,
             @Valid @RequestBody MilestoneUpdateRequest request

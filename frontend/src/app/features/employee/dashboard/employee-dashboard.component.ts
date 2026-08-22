@@ -220,7 +220,7 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
 
               <div class="flex gap-2 pt-3 border-t flex-wrap">
                 <button class="btn btn-sm btn-secondary flex-1" (click)="openTripDetails(trip)">🔍 Details</button>
-                <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-primary flex-1" (click)="viewTracking(trip)">📍 Track</button>
+                <button *ngIf="trip.status === 'ACTIVE' || trip.status === 'APPROVED'" class="btn btn-sm btn-primary flex-1" (click)="viewTracking(trip)">📍 Track</button>
                 <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-secondary flex-1" (click)="viewExpenses(trip)">🧾 Expense</button>
                 <button *ngIf="trip.status === 'ACTIVE'" class="btn btn-sm btn-danger flex-1" (click)="openClosureModal(trip)">🏁 Close Trip</button>
               </div>
@@ -486,18 +486,41 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
             <!-- Left Selection Panel -->
             <div class="card p-6 flex flex-col justify-between">
               <div>
-                <h3 class="mb-3">Live Trip Selector</h3>
-                <p class="text-secondary text-xs mb-4">Select an active journey to view live milestone updates.</p>
+                <h3 class="mb-2">Live Trip Selector</h3>
+                <p class="text-secondary text-xs mb-4">Select a journey to view and update real-time milestones.</p>
                 
-                <div class="form-group mb-4">
-                  <label class="form-label">Trip ID</label>
-                  <input class="form-input" type="number" placeholder="Enter Trip ID" [(ngModel)]="trackingTripId" />
+                <!-- Quick Trip Picker from User's Trips -->
+                <div class="trips-picker-list mb-4" *ngIf="trips.length > 0">
+                  <label class="form-label text-xs font-semibold mb-2 block">Your Journeys</label>
+                  <div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                    <div
+                      *ngFor="let t of trips; trackBy: trackByTripId"
+                      class="quick-trip-item p-3 rounded-lg cursor-pointer transition-all border"
+                      [class.active-selected]="activeTripId === t.id"
+                      (click)="selectTrackingTrip(t.id)"
+                    >
+                      <div class="flex justify-between items-center mb-1">
+                        <strong class="text-xs">Trip #{{ t.id }}</strong>
+                        <span class="badge text-2xs" [ngClass]="getBadgeClass(t.status || '')">{{ t.status }}</span>
+                      </div>
+                      <div class="text-xs text-primary font-medium truncate">📍 {{ t.destination }}</div>
+                      <div class="text-2xs text-secondary mt-1">🗓️ {{ t.startDate }} → {{ t.endDate }}</div>
+                    </div>
+                  </div>
                 </div>
-                <button class="btn btn-primary btn-sm w-full mb-6" (click)="activeTripId = trackingTripId">Load Journey Timeline</button>
 
-                <div *ngIf="activeTripId" class="active-trip-mini p-4 rounded bg-primary">
+                <!-- Manual Input Fallback -->
+                <div class="form-group mb-3">
+                  <label class="form-label text-xs">Manual Trip ID</label>
+                  <div class="flex gap-2">
+                    <input class="form-input text-xs flex-1" type="number" placeholder="Enter Trip ID" [(ngModel)]="trackingTripId" (keydown.enter)="selectTrackingTrip(trackingTripId)" />
+                    <button class="btn btn-primary btn-sm" (click)="selectTrackingTrip(trackingTripId)">Load</button>
+                  </div>
+                </div>
+
+                <div *ngIf="activeTripId" class="active-trip-mini p-3 rounded bg-primary mb-4">
                   <span class="text-xs text-accent font-semibold block mb-1">MONITORING TRIP #{{ activeTripId }}</span>
-                  <p class="text-xs text-secondary">Milestone check-ins update real-time travel desk notifications.</p>
+                  <p class="text-2xs text-secondary">Milestone check-ins sync with travel desk & management in real-time.</p>
                 </div>
               </div>
 
@@ -818,7 +841,7 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
 
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showDetailsModal = false">Close</button>
-          <button *ngIf="selectedTrip?.status === 'ACTIVE'" class="btn btn-primary" (click)="showDetailsModal = false; viewTracking(selectedTrip!)">
+          <button *ngIf="selectedTrip?.status === 'ACTIVE' || selectedTrip?.status === 'APPROVED'" class="btn btn-primary" (click)="showDetailsModal = false; viewTracking(selectedTrip!)">
             📍 Open Live Tracking
           </button>
         </div>
@@ -919,6 +942,20 @@ import { UserProfile, TripRequest, Expense, TripClosureCheck, CitySuggestion } f
       grid-template-columns: 320px 1fr;
       gap: 24px;
       width: 100%;
+    }
+
+    .quick-trip-item {
+      background: var(--bg-surface);
+      border-color: var(--border-light);
+    }
+    .quick-trip-item:hover {
+      border-color: rgba(0, 113, 227, 0.3);
+      background: rgba(0, 113, 227, 0.02);
+    }
+    .quick-trip-item.active-selected {
+      border-color: var(--accent);
+      background: rgba(0, 113, 227, 0.06);
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.12);
     }
 
     .form-grid-2 {
@@ -1272,10 +1309,20 @@ export class EmployeeDashboardComponent implements OnInit {
     });
   }
 
+  selectTrackingTrip(tripId?: number | null): void {
+    if (!tripId) return;
+    this.activeTripId = tripId;
+    this.trackingTripId = tripId;
+    this.cdr.markForCheck();
+  }
+
   viewTracking(trip: TripRequest): void {
-    this.activeTripId = trip.id || null;
-    this.trackingTripId = trip.id || null;
+    if (trip && trip.id) {
+      this.activeTripId = trip.id;
+      this.trackingTripId = trip.id;
+    }
     this.activeView = 'tracking';
+    this.cdr.markForCheck();
   }
 
   viewExpenses(trip: TripRequest): void {

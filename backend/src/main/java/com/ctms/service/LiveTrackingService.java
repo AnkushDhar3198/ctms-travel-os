@@ -33,7 +33,7 @@ public class LiveTrackingService {
     private final TripChecklistTimelineRepository timelineRepository;
 
     /**
-     * Updates a specific milestone on an active trip.
+     * Updates a specific milestone on an active (or approved) trip.
      * Requires verification text — stores it alongside the completion.
      * Returns the full updated milestone state including scheduled timeline.
      */
@@ -44,17 +44,35 @@ public class LiveTrackingService {
                         "Trip not found. The requested trip ID does not exist."
                 ));
 
-        if (tripRequest.getStatus() != TripStatus.ACTIVE) {
+        // Allow both ACTIVE and APPROVED trips (auto-promote APPROVED to ACTIVE)
+        if (tripRequest.getStatus() != TripStatus.ACTIVE && tripRequest.getStatus() != TripStatus.APPROVED) {
             throw new IllegalStateException(
-                    "Milestones can only be updated for active trips. Current status: " +
+                    "Milestones can only be updated for active or approved trips. Current status: " +
                     tripRequest.getStatus().name()
             );
         }
 
+        // Auto-promote APPROVED trip to ACTIVE if employee starts checking in
+        if (tripRequest.getStatus() == TripStatus.APPROVED) {
+            tripRequest.setStatus(TripStatus.ACTIVE);
+            log.info("Trip {} automatically promoted from APPROVED to ACTIVE on milestone verification", tripId);
+        }
+
+        // Auto-initialize milestones if not already present
         TripMilestones milestones = milestonesRepository.findByTripRequestId(tripId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Trip milestones not found. The itinerary may not have been set up yet."
-                ));
+                .orElseGet(() -> {
+                    TripMilestones m = TripMilestones.builder()
+                            .tripRequest(tripRequest)
+                            .flightBoarded(false)
+                            .flightLanded(false)
+                            .cabPickedUp(false)
+                            .hotelCheckedIn(false)
+                            .hotelCheckedOut(false)
+                            .returnFlightBoarded(false)
+                            .journeyEnded(false)
+                            .build();
+                    return milestonesRepository.save(m);
+                });
 
         // Validate verification text
         String verification = request.getVerificationText();
@@ -65,42 +83,45 @@ public class LiveTrackingService {
         }
 
         LocalDateTime now = LocalDateTime.now();
+        boolean val = request.getValue() != null ? request.getValue() : true;
+        String vText = verification.trim();
 
         // Update the specific milestone field with verification and timestamp
-        switch (request.getMilestoneName().toLowerCase()) {
+        String key = request.getMilestoneName() != null ? request.getMilestoneName().toLowerCase().replace("-", "_").trim() : "";
+        switch (key) {
             case "flight_boarded" -> {
-                milestones.setFlightBoarded(request.getValue());
-                milestones.setFlightBoardedVerification(verification.trim());
+                milestones.setFlightBoarded(val);
+                milestones.setFlightBoardedVerification(vText);
                 milestones.setFlightBoardedAt(now);
             }
             case "flight_landed" -> {
-                milestones.setFlightLanded(request.getValue());
-                milestones.setFlightLandedVerification(verification.trim());
+                milestones.setFlightLanded(val);
+                milestones.setFlightLandedVerification(vText);
                 milestones.setFlightLandedAt(now);
             }
             case "cab_picked_up" -> {
-                milestones.setCabPickedUp(request.getValue());
-                milestones.setCabPickedUpVerification(verification.trim());
+                milestones.setCabPickedUp(val);
+                milestones.setCabPickedUpVerification(vText);
                 milestones.setCabPickedUpAt(now);
             }
             case "hotel_checked_in" -> {
-                milestones.setHotelCheckedIn(request.getValue());
-                milestones.setHotelCheckedInVerification(verification.trim());
+                milestones.setHotelCheckedIn(val);
+                milestones.setHotelCheckedInVerification(vText);
                 milestones.setHotelCheckedInAt(now);
             }
             case "hotel_checked_out" -> {
-                milestones.setHotelCheckedOut(request.getValue());
-                milestones.setHotelCheckedOutVerification(verification.trim());
+                milestones.setHotelCheckedOut(val);
+                milestones.setHotelCheckedOutVerification(vText);
                 milestones.setHotelCheckedOutAt(now);
             }
             case "return_flight_boarded" -> {
-                milestones.setReturnFlightBoarded(request.getValue());
-                milestones.setReturnFlightBoardedVerification(verification.trim());
+                milestones.setReturnFlightBoarded(val);
+                milestones.setReturnFlightBoardedVerification(vText);
                 milestones.setReturnFlightBoardedAt(now);
             }
             case "journey_ended" -> {
-                milestones.setJourneyEnded(request.getValue());
-                milestones.setJourneyEndedVerification(verification.trim());
+                milestones.setJourneyEnded(val);
+                milestones.setJourneyEndedVerification(vText);
                 milestones.setJourneyEndedAt(now);
             }
             default -> throw new IllegalArgumentException(
@@ -111,22 +132,45 @@ public class LiveTrackingService {
         }
 
         milestones.setUpdatedAt(now);
-        milestonesRepository.save(milestones);
+        milestones = milestonesRepository.save(milestones);
+
+        tripRequest.setMilestones(milestones);
+        tripRequestRepository.save(tripRequest);
 
         log.info("Trip {} milestone '{}' updated to {} with verification '{}'", tripId,
-                request.getMilestoneName(), request.getValue(), verification.trim());
+                request.getMilestoneName(), val, vText);
 
         return toDTO(milestones, tripId);
     }
 
     /**
      * Get the current milestone state for a trip, including scheduled timeline.
+     * Auto-initializes default empty milestones if they haven't been created yet.
      */
+    @Transactional
     public TripMilestoneDTO getMilestones(Long tripId) {
-        TripMilestones milestones = milestonesRepository.findByTripRequestId(tripId)
+        TripRequest tripRequest = tripRequestRepository.findById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Milestones not found for trip ID " + tripId
+                        "Trip not found with ID " + tripId
                 ));
+
+        TripMilestones milestones = milestonesRepository.findByTripRequestId(tripId)
+                .orElseGet(() -> {
+                    TripMilestones m = TripMilestones.builder()
+                            .tripRequest(tripRequest)
+                            .flightBoarded(false)
+                            .flightLanded(false)
+                            .cabPickedUp(false)
+                            .hotelCheckedIn(false)
+                            .hotelCheckedOut(false)
+                            .returnFlightBoarded(false)
+                            .journeyEnded(false)
+                            .build();
+                    TripMilestones saved = milestonesRepository.save(m);
+                    tripRequest.setMilestones(saved);
+                    tripRequestRepository.save(tripRequest);
+                    return saved;
+                });
         return toDTO(milestones, tripId);
     }
 
