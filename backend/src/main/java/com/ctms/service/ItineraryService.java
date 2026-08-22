@@ -62,6 +62,8 @@ public class ItineraryService {
         }
 
         itineraryRepository.save(itinerary);
+        trip.setItinerary(itinerary);
+        tripRequestRepository.save(trip);
         log.info("Itinerary created/updated for trip {}", tripId);
 
         return toDTO(itinerary, tripId);
@@ -94,26 +96,29 @@ public class ItineraryService {
         }
 
         // Ensure itinerary exists
-        itineraryRepository.findByTripRequestId(tripId)
+        TripItinerary itinerary = itineraryRepository.findByTripRequestId(tripId)
                 .orElseThrow(() -> new IllegalStateException(
                         "An itinerary must be created before activating the trip."
                 ));
 
         // Initialize milestones
-        if (milestonesRepository.findByTripRequestId(tripId).isEmpty()) {
-            TripMilestones milestones = TripMilestones.builder()
-                    .tripRequest(trip)
-                    .flightBoarded(false)
-                    .flightLanded(false)
-                    .cabPickedUp(false)
-                    .hotelCheckedIn(false)
-                    .hotelCheckedOut(false)
-                    .returnFlightBoarded(false)
-                    .journeyEnded(false)
-                    .build();
-            milestonesRepository.save(milestones);
-        }
+        TripMilestones milestones = milestonesRepository.findByTripRequestId(tripId)
+                .orElseGet(() -> {
+                    TripMilestones m = TripMilestones.builder()
+                            .tripRequest(trip)
+                            .flightBoarded(false)
+                            .flightLanded(false)
+                            .cabPickedUp(false)
+                            .hotelCheckedIn(false)
+                            .hotelCheckedOut(false)
+                            .returnFlightBoarded(false)
+                            .journeyEnded(false)
+                            .build();
+                    return milestonesRepository.save(m);
+                });
 
+        trip.setItinerary(itinerary);
+        trip.setMilestones(milestones);
         trip.setStatus(TripStatus.ACTIVE);
         tripRequestRepository.save(trip);
 
@@ -162,6 +167,8 @@ public class ItineraryService {
         }
 
         timelineRepository.save(timeline);
+        trip.setChecklistTimeline(timeline);
+        tripRequestRepository.save(trip);
         log.info("Checklist timeline saved for trip {}", tripId);
 
         return toTimelineDTO(timeline, tripId);

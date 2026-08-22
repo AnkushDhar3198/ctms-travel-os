@@ -24,6 +24,8 @@ public class TripRequestService {
     private final TripRequestRepository tripRequestRepository;
     private final UserRepository userRepository;
     private final TripMilestonesRepository milestonesRepository;
+    private final TripItineraryRepository itineraryRepository;
+    private final TripChecklistTimelineRepository timelineRepository;
     private final AutoValidationService autoValidationService;
 
     /**
@@ -134,6 +136,15 @@ public class TripRequestService {
         trip.setStatus(TripStatus.APPROVED);
         trip.setRemarks(approval.getRemarks());
 
+        // Save allocated assets into itinerary if provided by manager
+        if (approval.getAllocatedAssets() != null && !approval.getAllocatedAssets().isBlank()) {
+            TripItinerary itinerary = itineraryRepository.findByTripRequestId(tripId)
+                    .orElse(TripItinerary.builder().tripRequest(trip).build());
+            itinerary.setAllocatedAssets(approval.getAllocatedAssets().trim());
+            itineraryRepository.save(itinerary);
+            trip.setItinerary(itinerary);
+        }
+
         tripRequestRepository.save(trip);
         log.info("Trip {} approved by manager", tripId);
 
@@ -197,9 +208,9 @@ public class TripRequestService {
             dto.setEmployeeEmpId(r.getEmployee().getEmpId());
         }
 
-        // Attach itinerary if present
-        if (r.getItinerary() != null) {
-            TripItinerary it = r.getItinerary();
+        // Attach itinerary - query repository if not loaded on parent object
+        TripItinerary it = (r.getItinerary() != null) ? r.getItinerary() : itineraryRepository.findByTripRequestId(r.getId()).orElse(null);
+        if (it != null) {
             dto.setItinerary(ItineraryDTO.builder()
                     .tripId(r.getId())
                     .pnr(it.getPnr())
@@ -215,10 +226,10 @@ public class TripRequestService {
                     .build());
         }
 
-        // Attach milestones if present
-        if (r.getMilestones() != null) {
-            TripMilestones m = r.getMilestones();
-            dto.setMilestones(TripMilestoneDTO.builder()
+        // Attach milestones - query repository if not loaded on parent object
+        TripMilestones m = (r.getMilestones() != null) ? r.getMilestones() : milestonesRepository.findByTripRequestId(r.getId()).orElse(null);
+        if (m != null) {
+            TripMilestoneDTO milestoneDTO = TripMilestoneDTO.builder()
                     .tripId(r.getId())
                     .flightBoarded(m.getFlightBoarded())
                     .flightLanded(m.getFlightLanded())
@@ -227,8 +238,38 @@ public class TripRequestService {
                     .hotelCheckedOut(m.getHotelCheckedOut())
                     .returnFlightBoarded(m.getReturnFlightBoarded())
                     .journeyEnded(m.getJourneyEnded())
+                    .flightBoardedVerification(m.getFlightBoardedVerification())
+                    .flightLandedVerification(m.getFlightLandedVerification())
+                    .cabPickedUpVerification(m.getCabPickedUpVerification())
+                    .hotelCheckedInVerification(m.getHotelCheckedInVerification())
+                    .hotelCheckedOutVerification(m.getHotelCheckedOutVerification())
+                    .returnFlightBoardedVerification(m.getReturnFlightBoardedVerification())
+                    .journeyEndedVerification(m.getJourneyEndedVerification())
+                    .flightBoardedAt(m.getFlightBoardedAt() != null ? m.getFlightBoardedAt().toString() : null)
+                    .flightLandedAt(m.getFlightLandedAt() != null ? m.getFlightLandedAt().toString() : null)
+                    .cabPickedUpAt(m.getCabPickedUpAt() != null ? m.getCabPickedUpAt().toString() : null)
+                    .hotelCheckedInAt(m.getHotelCheckedInAt() != null ? m.getHotelCheckedInAt().toString() : null)
+                    .hotelCheckedOutAt(m.getHotelCheckedOutAt() != null ? m.getHotelCheckedOutAt().toString() : null)
+                    .returnFlightBoardedAt(m.getReturnFlightBoardedAt() != null ? m.getReturnFlightBoardedAt().toString() : null)
+                    .journeyEndedAt(m.getJourneyEndedAt() != null ? m.getJourneyEndedAt().toString() : null)
                     .updatedAt(m.getUpdatedAt() != null ? m.getUpdatedAt().toString() : null)
-                    .build());
+                    .build();
+
+            // Attach scheduled checklist timeline if available
+            timelineRepository.findByTripRequestId(r.getId()).ifPresent(tl -> {
+                milestoneDTO.setScheduledTimeline(ChecklistTimelineDTO.builder()
+                        .tripId(r.getId())
+                        .flightBoardingTime(tl.getFlightBoardingTime() != null ? tl.getFlightBoardingTime().toString() : null)
+                        .flightLandingTime(tl.getFlightLandingTime() != null ? tl.getFlightLandingTime().toString() : null)
+                        .cabPickupTime(tl.getCabPickupTime() != null ? tl.getCabPickupTime().toString() : null)
+                        .hotelCheckinTime(tl.getHotelCheckinTime() != null ? tl.getHotelCheckinTime().toString() : null)
+                        .hotelCheckoutTime(tl.getHotelCheckoutTime() != null ? tl.getHotelCheckoutTime().toString() : null)
+                        .returnFlightTime(tl.getReturnFlightTime() != null ? tl.getReturnFlightTime().toString() : null)
+                        .journeyEndTime(tl.getJourneyEndTime() != null ? tl.getJourneyEndTime().toString() : null)
+                        .build());
+            });
+
+            dto.setMilestones(milestoneDTO);
         }
 
         return dto;
